@@ -1,0 +1,136 @@
+{
+  "regioes": [
+    {
+      "id": "1",
+      "nome": "Vale do Paraíba",
+      "estado": "SP",
+      "cidade": "São José dos Campos",
+      "tipo": "Enchente",
+      "area_km2": 2890,
+      "nivel_risco": "Crítico",
+      "data_cadastro": "2026-01-15",
+      "descricao": "Área de alto risco de enchente pela proximidade do Rio Paraíba do Sul"
+    },
+    {
+      "id": "2",
+      "nome": "Região Metropolitana de Recife",
+      "estado": "PE",
+      "cidade": "Recife",
+      "tipo": "Enchente",
+      "area_km2": 2768,
+      "nivel_risco": "Alto",
+      "data_cadastro": "2026-01-20",
+      "descricao": "Histórico de alagamentos severos em períodos chuvosos intensos"
+    },
+    {
+      "id": "3",
+      "nome": "Sertão Nordestino",
+      "estado": "CE",
+      "cidade": "Juazeiro do Norte",
+      "tipo": "Seca",
+      "area_km2": 12500,
+      "nivel_risco": "Crítico",
+      "data_cadastro": "2026-02-01",
+      "descricao": "Região com déficit hídrico severo e vulnerabilidade extrema à estiagem"
+    },
+    {
+      "id": "4",
+      "nome": "Norte do Pantanal",
+      "estado": "MT",
+      "cidade": "Cuiabá",
+      "tipo": "Queimada",
+      "area_km2": 85000,
+      "nivel_risco": "Alto",
+      "data_cadastro": "2026-02-10",
+      "descricao": "Zona de alto risco de incêndio na estação seca do Pantanal"
+    },
+    {
+      "id": "5",
+      "nome": "Serra Gaúcha",
+      "estado": "RS",
+      "cidade": "Caxias do Sul",
+      "tipo": "Tempestade",
+      "area_km2": 1440,
+      "nivel_risco": "Médio",
+      "data_cadastro": "2026-02-18",
+      "descricao": "Risco de granizo e vendavais em frentes frias intensas"
+    },
+    {
+      "id": "6",
+      "nome": "Baixada Fluminense",
+      "estado": "RJ",
+      "cidade": "Nova Iguaçu",
+      "tipo": "Enchente",
+      "area_km2": 3780,
+      "nivel_risco": "Crítico",
+      "data_cadastro": "2026-03-01",
+      "descricao": "Alta impermeabilização do solo e baixa altitude elevam risco de inundação"
+    },
+    {
+      "id": "7",
+      "nome": "Sul do Amazonas",
+      "estado": "AM",
+      "cidade": "Manaus",
+      "tipo": "Queimada",
+      "area_km2": 42000,
+      "nivel_risco": "Alto",
+      "data_cadastro": "2026-03-10",
+      "descricao": "Desmatamento aumenta vulnerabilidade a incêndios florestais"
+    },
+    {
+      "id": "8",
+      "nome": "Grande ABC Paulista",
+      "estado": "SP",
+      "cidade": "Santo André",
+      "tipo": "Tempestade",
+      "area_km2": 840,
+      "nivel_risco": "Médio",
+      "data_cadastro": "2026-03-15",
+      "descricao": "Região urbana densa sujeita a vendavais e alagamentos rápidos"
+    },
+    {
+      "id": "9",
+      "nome": "Chapada Diamantina",
+      "estado": "BA",
+      "cidade": "Lençóis",
+      "tipo": "Seca",
+      "area_km2": 15650,
+      "nivel_risco": "Médio",
+      "data_cadastro": "2026-04-02",
+      "descricao": "Monitoramento de secas prolongadas em parque nacional"
+    },
+    {
+      "id": "10",
+      "nome": "Litoral Norte de SC",
+      "estado": "SC",
+      "cidade": "Balneário Camboriú",
+      "tipo": "Múltiplos",
+      "area_km2": 1200,
+      "nivel_risco": "Alto",
+      "data_cadastro": "2026-04-20",
+      "descricao": "Vulnerabilidade combinada a enchentes, vendavais e ressacas"
+    },
+    {
+      "id": "11",
+      "nome": "Vale do Itajaí",
+      "estado": "SC",
+      "cidade": "Blumenau",
+      "tipo": "Enchente",
+      "area_km2": 5500,
+      "nivel_risco": "Crítico",
+      "data_cadastro": "2026-05-01",
+      "descricao": "Histórico de enchentes devastadoras — monitoramento prioritário"
+    },
+    {
+      "id": "12",
+      "nome": "Cariri Paraibano",
+      "estado": "PB",
+      "cidade": "Campina Grande",
+      "tipo": "Seca",
+      "area_km2": 6900,
+      "nivel_risco": "Alto",
+      "data_cadastro": "2026-05-10",
+      "descricao": "Escassez hídrica crônica com impacto em comunidades rurais"
+    }
+  ]
+}

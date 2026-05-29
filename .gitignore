@@ -1,0 +1,48 @@
+# ─── Dependências ─────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── Expo ─────────────────────────────────────────────────────────────────────
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# ─── Builds nativos (gerados pelo EAS Build / prebuild) ───────────────────────
+/ios/
+/android/
+.kotlin/
+
+# ─── Metro bundler ────────────────────────────────────────────────────────────
+.metro-health-check*
+
+# ─── Logs e debug ─────────────────────────────────────────────────────────────
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# ─── Certificados TLS (gerados automaticamente pelo server.js na 1ª execução) ─
+.certs/
+*.pem
+*.p12
+*.p8
+*.key
+*.jks
+*.mobileprovision
+*.orig.*
+
+# ─── Variáveis de ambiente ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Sistema operacional ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Editores ─────────────────────────────────────────────────────────────────
+.idea/
+*.tsbuildinfo
+
+# ─── Claude Code ──────────────────────────────────────────────────────────────
+.claude/
