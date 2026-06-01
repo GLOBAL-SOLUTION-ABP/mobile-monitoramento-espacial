@@ -4,6 +4,10 @@
 > Disciplina: Mobile Development & IoT
 
 ---
+## Colaboradores
+- Albert Katri RM556544 
+- Bruno Biletsky RM554739
+- Paulo Akira RM556840
 
 ## Sobre o Projeto
 
@@ -67,12 +71,14 @@ Satélites como o Sentinel-2 (ESA) e as redes da NASA permitem detectar padrões
 - Campo de estrelas gerado deterministicamente (70 estrelas)
 - Anel de órbita pontilhado ao redor do logo
 - Validação com feedback visual via toast animado
+<img width="383" height="768" alt="image" src="https://github.com/user-attachments/assets/84332ae3-a00a-4495-92f7-a8652ad866e1" />
 
 #### Menu Principal
 - Lista vertical de cards com ícone, título e subtítulo
 - Card do operador com avatar, nome e pílula de papel colorida
 - Indicador "LIVE" de sistema ativo
 - Card "Monitoramento" bloqueado para usuários sem permissão
+<img width="398" height="767" alt="image" src="https://github.com/user-attachments/assets/abe7e877-817b-44a7-bf65-3a65bdf4ecf8" />
 
 #### Registrar Área
 - Indicador de etapas visuais (Etapa 1: Localização → Etapa 2: Parâmetros)
@@ -82,6 +88,8 @@ Satélites como o Sentinel-2 (ESA) e as redes da NASA permitem detectar padrões
 - Área em km² e descrição opcional
 - Envio para API local (`POST /regioes`)
 - Notificação push ao cadastrar com sucesso
+<img width="411" height="768" alt="image" src="https://github.com/user-attachments/assets/b9fd18d0-e0e9-4f34-95e5-f2d00e578ca7" />
+<img width="398" height="768" alt="image" src="https://github.com/user-attachments/assets/25c5922a-a127-435e-918f-30e1f5063a53" />
 
 #### Monitoramento (Dashboard)
 - **KPI hero**: total de regiões monitoradas em destaque
@@ -91,6 +99,8 @@ Satélites como o Sentinel-2 (ESA) e as redes da NASA permitem detectar padrões
 - Tabela completa: UF, Região, Tipo, Risco, Área (km²)
 - Indicador de fonte de dados: API local ou db.json embutido
 - Suporte offline com fallback em 3 camadas (API → Cache → db.json)
+<img width="368" height="759" alt="image" src="https://github.com/user-attachments/assets/603ba2bd-59bd-47e6-aa6a-f8453e2ff962" />
+<img width="401" height="759" alt="image" src="https://github.com/user-attachments/assets/e9d537d2-8b2d-409e-832d-00ac2fa6f3c0" />
 
 #### Alertas Climáticos
 - Cards com faixa lateral colorida por severidade
@@ -100,6 +110,13 @@ Satélites como o Sentinel-2 (ESA) e as redes da NASA permitem detectar padrões
 - Notificação push imediata para alertas Críticos
 - Notificação 1 dia antes para alertas de outras severidades
 - Histórico filtrado: Resolvidos / Descartados
+<img width="408" height="759" alt="image" src="https://github.com/user-attachments/assets/b0c2121d-e615-4587-b3f4-901700987b17" />
+<img width="419" height="758" alt="image" src="https://github.com/user-attachments/assets/00220ac5-fcd1-41f4-a8e3-22b30c8854ee" />
+
+#### Criar conta
+- Permite criar contas novas para acesso (caso não tenha uma ainda)
+- Permite criar conta como administrador através da aba admin usando o código "admin"
+<img width="391" height="757" alt="image" src="https://github.com/user-attachments/assets/e546c41d-ac72-46f4-83ba-219476b2cd43" />
 
 ---
 
