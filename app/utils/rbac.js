@@ -13,9 +13,9 @@ export const ROLE_COLORS = {
 };
 
 const PERMISSIONS = {
-  admin:   ['view_dashboard', 'view_analytics', 'register_vehicle', 'view_fidelidade'],
-  analyst: ['view_dashboard', 'view_analytics', 'register_vehicle', 'view_fidelidade'],
-  user:    ['register_vehicle', 'view_fidelidade'],
+  admin:   ['view_dashboard', 'view_analytics', 'register_region', 'view_alerts'],
+  analyst: ['view_dashboard', 'view_analytics', 'register_region', 'view_alerts'],
+  user:    ['register_region', 'view_alerts'],
 };
 
 export const hasPermission = (role, action) =>

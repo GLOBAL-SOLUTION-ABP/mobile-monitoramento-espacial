@@ -74,11 +74,9 @@ export default function Layout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="menu" options={{ headerShown: false }} />
         <Stack.Screen name="nova-conta" options={{ title: "Criar Conta" }} />
-        <Stack.Screen name="about" options={{ title: "Sobre" }} />
         <Stack.Screen name="cadastro" options={{ title: "Registrar Região", headerRight: () => <MenuHeaderButton /> }} />
         <Stack.Screen name="registros" options={{ title: "Monitoramento", headerRight: () => <MenuHeaderButton /> }} />
         <Stack.Screen name="alertas" options={{ title: "Alertas Climáticos", headerRight: () => <MenuHeaderButton /> }} />
-        <Stack.Screen name="fidelidade" options={{ title: "Alertas", headerRight: () => <MenuHeaderButton /> }} />
       </Stack>
     </View>
     </AuthProvider>
