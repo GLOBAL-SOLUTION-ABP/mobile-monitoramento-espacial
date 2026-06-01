@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
+import StarField from './components/StarField';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform,
@@ -12,8 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sanitizeText, safeError, signPayload } from './utils/security';
 import { checkRateLimit } from './utils/rateLimiter';
 import { logger } from './utils/logger';
-import { loadSession } from './utils/auth';
 import { ROLE_LABELS, ROLE_COLORS, hasPermission } from './utils/rbac';
+import { useAuth } from './context/AuthContext';
 
 const notify = async (title, body) => {
   if (Platform.OS === 'web') return;
@@ -79,7 +80,8 @@ export default function Cadastro() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
-  const [role, setRole] = useState(null);
+  const { session, loading: loadingAuth } = useAuth();
+  const role = session?.role || null;
 
   const [nome, setNome] = useState('');
   const [estado, setEstado] = useState(null);
@@ -113,11 +115,11 @@ export default function Cadastro() {
   const toastTranslateX = toastAnim.interpolate({ inputRange: [0, 1], outputRange: [120, 0] });
 
   useEffect(() => {
-    loadSession().then(s => {
-      if (!s) { logger.warn('ACESSO_NAO_AUTORIZADO', { route: '/cadastro' }); router.replace('/'); return; }
-      setRole(s.role || 'user');
-    });
-  }, []);
+    if (!loadingAuth && !session) {
+      logger.warn('ACESSO_NAO_AUTORIZADO', { route: '/cadastro' });
+      router.replace('/');
+    }
+  }, [session, loadingAuth]);
 
   const openModal = (target) => {
     const configs = {
@@ -234,6 +236,7 @@ export default function Cadastro() {
 
   return (
     <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <StarField />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
         {/* Cabeçalho com steps visuais */}

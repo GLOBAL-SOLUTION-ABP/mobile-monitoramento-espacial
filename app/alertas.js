@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
+import StarField from './components/StarField';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Modal, Platform, Animated, KeyboardAvoidingView,
@@ -214,6 +215,7 @@ export default function Alertas() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <StarField />
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }} showsVerticalScrollIndicator={false}>
 
         {/* ── KPIs ─────────────────────────────────────────────────────────── */}

@@ -1,4 +1,5 @@
 ﻿import React, { useState, useRef } from 'react';
+import StarField from './components/StarField';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform, Animated,
@@ -123,6 +124,7 @@ export default function NovaConta() {
       style={styles.keyboardView}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <StarField />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
         {/* Cabeçalho */}

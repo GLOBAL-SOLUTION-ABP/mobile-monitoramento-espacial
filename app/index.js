@@ -9,23 +9,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sanitizeText } from './utils/security';
-import { saveSession, loadSession } from './utils/auth';
 import { assignRole } from './utils/rbac';
 import { hashPassword, decryptData, encryptData } from './utils/crypto';
 import { logger } from './utils/logger';
 import { checkLockout, recordFailure, clearFailures } from './utils/bruteForce';
+import { useAuth } from './context/AuthContext';
+import StarField from './components/StarField';
 
 const USUARIOS_KEY = '@usuarios';
 const TOAST_ICONS = { success: 'checkmark-circle', error: 'close-circle', warning: 'alert-circle' };
-
-// Campo de estrelas determinístico
-const STARS = Array.from({ length: 70 }, (_, i) => ({
-  id: i,
-  size: ((i * 3) % 3) + 1,
-  opacity: (((i * 17) % 7) + 2) * 0.06,
-  left: ((i * 37 + 13) % 95) + 2,
-  top: ((i * 53 + 7) % 90) + 2,
-}));
 
 const notify = async (title, body) => {
   if (Platform.OS === 'web') return;
@@ -37,6 +29,7 @@ const notify = async (title, body) => {
 export default function Login() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { login, session, loading: loadingAuth } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [focusedField, setFocusedField] = useState(null);
@@ -58,12 +51,8 @@ export default function Login() {
   const toastTranslateX = toastAnim.interpolate({ inputRange: [0, 1], outputRange: [120, 0] });
 
   useEffect(() => {
-    const checkSession = async () => {
-      const session = await loadSession();
-      if (session) router.replace('/menu');
-    };
-    checkSession();
-  }, []);
+    if (!loadingAuth && session) router.replace('/menu');
+  }, [session, loadingAuth]);
 
   const validarLogin = async () => {
     if (!email.trim() || !senha) {
@@ -73,7 +62,7 @@ export default function Login() {
     const emailSanitized = sanitizeText(email.trim()).toLowerCase();
 
     if (emailSanitized === 'a' && senha === 'a') {
-      await saveSession('a', 'Admin', 'admin');
+      await login('a', 'Admin', 'admin');
       await notify('Acesso autorizado 🛰️', 'Bem-vindo ao SatGuard.');
       router.replace('/menu');
       return;
@@ -111,7 +100,7 @@ export default function Login() {
           );
           await AsyncStorage.setItem(USUARIOS_KEY, encryptData(JSON.stringify(migrated)));
         }
-        await saveSession(usuario.email, usuario.nome, usuario.role || assignRole(usuario.email));
+        await login(usuario.email, usuario.nome, usuario.role || assignRole(usuario.email));
         await notify('Acesso autorizado 🛰️', `Bem-vindo(a), ${usuario.nome.split(' ')[0]}!`);
         router.replace('/menu');
       } else {
@@ -135,23 +124,7 @@ export default function Login() {
       style={styles.keyboardView}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Campo de estrelas */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {STARS.map(s => (
-          <View
-            key={s.id}
-            style={{
-              position: 'absolute',
-              width: s.size, height: s.size,
-              borderRadius: s.size,
-              backgroundColor: '#FFFFFF',
-              opacity: s.opacity,
-              left: `${s.left}%`,
-              top: `${s.top}%`,
-            }}
-          />
-        ))}
-      </View>
+      <StarField count={110} />
 
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 32 }]}

@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
+import StarField from './components/StarField';
 import {
   View, Text, FlatList, ScrollView, StyleSheet,
   TouchableOpacity, Platform, ActivityIndicator, useWindowDimensions,
@@ -8,7 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Network from 'expo-network';
-import { loadSession, clearSession } from './utils/auth';
+import { useAuth } from './context/AuthContext';
+import GlassCard from './components/GlassCard';
 import { checkRateLimit } from './utils/rateLimiter';
 import { logger } from './utils/logger';
 import { hasPermission, ROLE_LABELS, ROLE_COLORS } from './utils/rbac';
@@ -49,19 +51,22 @@ export default function Registros() {
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { session, loading: loadingAuth, logout } = useAuth();
   const [regioes, setRegioes] = useState([]);
   const [isOnline, setIsOnline] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState(null);
+
+  const role = session?.role || null;
 
   useEffect(() => { fetchRegioes(); }, []);
   useEffect(() => {
-    loadSession().then(s => {
-      if (!s) { logger.warn('ACESSO_NAO_AUTORIZADO', { route: '/registros' }); router.replace('/'); return; }
-      logger.info('DASHBOARD_ACCESS', { role: s.role });
-      setRole(s.role || 'user');
-    });
-  }, []);
+    if (!loadingAuth && !session) {
+      logger.warn('ACESSO_NAO_AUTORIZADO', { route: '/registros' });
+      router.replace('/');
+      return;
+    }
+    if (session) logger.info('DASHBOARD_ACCESS', { role: session.role });
+  }, [session, loadingAuth]);
 
   const readCache = async () => {
     const cached = await AsyncStorage.getItem('regioesCache');
@@ -114,7 +119,7 @@ export default function Registros() {
   };
 
   const handleLogout = async () => {
-    await clearSession();
+    await logout();
     router.replace('/');
   };
 
@@ -182,6 +187,7 @@ export default function Registros() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }} showsVerticalScrollIndicator={false}>
+      <StarField />
 
       {/* Role badge */}
       {role && (

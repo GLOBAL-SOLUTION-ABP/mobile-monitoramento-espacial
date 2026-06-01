@@ -190,8 +190,8 @@ server.use((req, res, next) => {
 
 // ── Audit trail for critical write operations ──────────────────────────────
 server.use((req, res, next) => {
-  if (req.method === 'POST' && req.path === '/carros') {
-    slog('AUDIT', 'VEICULO_CADASTRADO', { ip: req.ip, nome: req.body?.nome, ano: req.body?.ano });
+  if (req.method === 'POST' && req.path === '/regioes') {
+    slog('AUDIT', 'REGIAO_CADASTRADA', { ip: req.ip, estado: req.body?.estado, tipo: req.body?.tipo });
   }
   next();
 });
@@ -208,11 +208,11 @@ const http = require('http');
 
   http.createServer(server).listen(3000, () => {
     console.log('');
-    console.log('🌐 Ford Service Analytics API — http://localhost:3000  (cliente dev)');
+    console.log('🌐 SatGuard API — http://localhost:3000  (cliente dev)');
   });
 
   https.createServer({ key, cert }, server).listen(3443, () => {
-    console.log('🔒 Ford Service Analytics API — https://localhost:3443 (TLS, mesma API)');
+    console.log('🔒 SatGuard API — https://localhost:3443 (TLS, mesma API)');
     console.log('   ✅ HTTPS: cert auto-assinado em .certs/ (gerado no startup)');
     console.log('   ✅ Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options');
     console.log('   ✅ CORS: apenas origens autorizadas');

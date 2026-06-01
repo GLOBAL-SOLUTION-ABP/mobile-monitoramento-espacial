@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { loadSession, clearSession } from './utils/auth';
 import { logger } from './utils/logger';
-import { ROLE_LABELS, ROLE_COLORS, hasPermission } from './utils/rbac';
+import { hasPermission } from './utils/rbac';
+import { useAuth } from './context/AuthContext';
+import StarField from './components/StarField';
+import RoleBadge from './components/RoleBadge';
 
 const MENU_ITEMS = [
   { key: 'cadastrar', icon: 'location-outline', title: 'Registrar Área',  subtitle: 'Adicionar nova região de monitoramento', route: '/cadastro' },
@@ -14,29 +16,19 @@ const MENU_ITEMS = [
   { key: 'sair',      icon: 'power-outline',     title: 'Encerrar Sessão', subtitle: 'Sair do sistema com segurança',          danger: true },
 ];
 
-const STARS = Array.from({ length: 60 }, (_, i) => ({
-  id: i,
-  size: ((i * 3) % 3) + 1,
-  opacity: (((i * 17) % 7) + 1) * 0.07,
-  left: ((i * 37 + 13) % 95) + 2,
-  top: ((i * 53 + 7) % 90) + 2,
-}));
 
 export default function Menu() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [session, setSession] = useState(null);
+  const { session, loading, logout } = useAuth();
 
   useEffect(() => {
-    loadSession().then(s => {
-      if (!s) { router.replace('/'); return; }
-      setSession(s);
-    });
-  }, []);
+    if (!loading && !session) router.replace('/');
+  }, [session, loading]);
 
   const handleLogout = async () => {
     logger.audit('LOGOUT', { role: session?.role });
-    await clearSession();
+    await logout();
     router.replace('/');
   };
 
@@ -57,23 +49,7 @@ export default function Menu() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Campo de estrelas */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {STARS.map(s => (
-          <View
-            key={s.id}
-            style={{
-              position: 'absolute',
-              width: s.size, height: s.size,
-              borderRadius: s.size,
-              backgroundColor: '#FFFFFF',
-              opacity: s.opacity,
-              left: `${s.left}%`,
-              top: `${s.top}%`,
-            }}
-          />
-        ))}
-      </View>
+      <StarField count={90} />
 
       {/* Cabeçalho galáxia */}
       <View style={styles.galaxyHeader}>
@@ -101,12 +77,7 @@ export default function Menu() {
           <Text style={styles.userLabel}>OPERADOR</Text>
           <Text style={styles.userName} numberOfLines={1}>{primeiroNome}</Text>
         </View>
-        {role && (
-          <View style={[styles.rolePill, { borderColor: ROLE_COLORS[role], backgroundColor: ROLE_COLORS[role] + '25' }]}>
-            <View style={[styles.roleOrb, { backgroundColor: ROLE_COLORS[role] }]} />
-            <Text style={[styles.roleText, { color: ROLE_COLORS[role] }]}>{ROLE_LABELS[role]}</Text>
-          </View>
-        )}
+        <RoleBadge role={role} />
       </View>
 
       <Text style={styles.sectionLabel}>PAINEL DE CONTROLE</Text>
@@ -221,13 +192,6 @@ const styles = StyleSheet.create({
   },
   userLabel: { fontSize: 9, color: '#4A2070', fontWeight: '700', letterSpacing: 2 },
   userName:  { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginTop: 2 },
-  rolePill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6,
-  },
-  roleOrb:  { width: 7, height: 7, borderRadius: 4 },
-  roleText: { fontSize: 9, fontWeight: '800', letterSpacing: 1.2 },
-
   sectionLabel: {
     fontSize: 9, color: '#4A2070', fontWeight: '700',
     letterSpacing: 3, marginBottom: 12,

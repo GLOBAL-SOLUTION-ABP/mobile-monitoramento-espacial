@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import { runRetentionPolicy } from "./utils/retention";
+import { AuthProvider } from "./context/AuthContext";
 
 function MenuHeaderButton() {
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function Layout() {
   }, []);
 
   return (
+    <AuthProvider>
     <View style={{ flex: 1, backgroundColor: "#07000F", overflow: "hidden" }}>
       <StatusBar style="light" />
       <Stack
@@ -79,5 +81,6 @@ export default function Layout() {
         <Stack.Screen name="fidelidade" options={{ title: "Alertas", headerRight: () => <MenuHeaderButton /> }} />
       </Stack>
     </View>
+    </AuthProvider>
   );
 }
