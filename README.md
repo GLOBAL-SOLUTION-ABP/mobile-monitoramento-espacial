@@ -4,6 +4,10 @@
 > Disciplina: Mobile Development & IoT
 
 ---
+## Colaboradores
+- Albert Katri RM556544 
+- Bruno Biletsky RM554739
+- Paulo Akira RM556840
 
 ## Sobre o Projeto
 
