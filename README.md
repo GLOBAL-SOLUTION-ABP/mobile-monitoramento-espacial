@@ -123,7 +123,7 @@ Satélites como o Sentinel-2 (ESA) e as redes da NASA permitem detectar padrões
 ## Estrutura do Projeto
 
 ```
-fiap-mdi-sprint-ford_service_analytics-main/
+mobile-monitoramento-espacial/
 ├── app/
 │   ├── _layout.js          # Layout raiz, notificações, retenção de dados
 │   ├── index.js            # Tela de login com campo de estrelas
@@ -204,7 +204,7 @@ O servidor mock (`server.js`) expõe endpoints REST via HTTP (porta 3000) e HTTP
 ### Instalação
 
 ```bash
-cd fiap-mdi-sprint-ford_service_analytics-main
+mobile-monitoramento-espacial
 npm install
 ```
 
