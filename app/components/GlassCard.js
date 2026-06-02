@@ -1,24 +1,22 @@
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 export default function GlassCard({ children, style }) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.card, style]}>
+    <View style={[{
+      backgroundColor: colors.card,
+      borderRadius: 20,
+      padding: 18,
+      borderWidth: 1,
+      borderColor: colors.border,
+      elevation: 8,
+      shadowColor: colors.accent,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+    }, style]}>
       {children}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#120028',
-    borderRadius: 20,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#3A1A6A',
-    elevation: 8,
-    shadowColor: '#B478F0',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-  },
-});

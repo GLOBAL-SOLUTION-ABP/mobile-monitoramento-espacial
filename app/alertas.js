@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import StarField from './components/StarField';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -13,13 +13,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sanitizeText } from './utils/security';
 import { encryptData, decryptData } from './utils/crypto';
 import { logger } from './utils/logger';
+import { useTheme } from './context/ThemeContext';
 
 const KEY = '@alertas_climaticos';
 const TOAST_ICONS = { success: 'checkmark-circle', error: 'close-circle', warning: 'alert-circle' };
 
-const SEV_COLORS  = { 'Baixo': '#B478F0', 'Médio': '#FB923C', 'Alto': '#F97316', 'Crítico': '#F87171' };
-const SEV_BG      = { 'Baixo': '#0C0018', 'Médio': '#120C00', 'Alto': '#120800', 'Crítico': '#120012' };
-const SEV_BORDER  = { 'Baixo': '#3A1A6A', 'Médio': '#3A2A00', 'Alto': '#4A1800', 'Crítico': '#5A0828' };
+const SEV_COLORS = { 'Baixo': '#B478F0', 'Médio': '#FB923C', 'Alto': '#F97316', 'Crítico': '#F87171' };
 
 const TIPOS_ALERTA = ['Enchente', 'Seca', 'Queimada', 'Tempestade', 'Múltiplos', 'Outros'];
 const SEVERIDADES  = ['Baixo', 'Médio', 'Alto', 'Crítico'];
@@ -50,6 +49,19 @@ const dateStatus = (str) => {
 export default function Alertas() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const sevBg = useMemo(() => isDark
+    ? { 'Baixo': '#0C0018', 'Médio': '#120C00', 'Alto': '#120800', 'Crítico': '#120012' }
+    : { 'Baixo': '#F0EAFF', 'Médio': '#FFF7ED', 'Alto': '#FFF4ED', 'Crítico': '#FFF0F5' },
+  [isDark]);
+
+  const sevBorder = useMemo(() => isDark
+    ? { 'Baixo': '#3A1A6A', 'Médio': '#3A2A00', 'Alto': '#4A1800', 'Crítico': '#5A0828' }
+    : { 'Baixo': '#C9B8E8', 'Médio': '#FED7AA', 'Alto': '#FDBA74', 'Crítico': '#FECACA' },
+  [isDark]);
+
   const [alertas, setAlertas] = useState([]);
   const [loading, setLoading]  = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -195,7 +207,6 @@ export default function Alertas() {
     showToast('Alerta descartado.', 'warning');
   };
 
-  // ── Listas derivadas ──────────────────────────────────────────────────────
   const ativos      = alertas.filter(a => !a.status || a.status === 'ativo');
   const resolvidos  = alertas.filter(a => a.status === 'resolvido');
   const descartados = alertas.filter(a => a.status === 'descartado');
@@ -207,7 +218,7 @@ export default function Alertas() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#B478F0" />
+        <ActivityIndicator size="large" color={colors.accent} />
         <Text style={styles.loadingText}>Carregando alertas...</Text>
       </View>
     );
@@ -215,32 +226,32 @@ export default function Alertas() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <StarField />
+      <StarField color={colors.starColor} />
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }} showsVerticalScrollIndicator={false}>
 
-        {/* ── KPIs ─────────────────────────────────────────────────────────── */}
+        {/* KPIs */}
         <View style={styles.kpiRow}>
           <View style={[styles.kpiCard, { marginRight: 6 }]}>
-            <Ionicons name="warning-outline" size={20} color="#B478F0" />
+            <Ionicons name="warning-outline" size={20} color={colors.accent} />
             <Text style={styles.kpiValue}>{ativos.length}</Text>
             <Text style={styles.kpiLabel}>Ativos</Text>
           </View>
-          <View style={[styles.kpiCard, { marginHorizontal: 6, borderColor: criticos > 0 ? '#3A0A2A' : '#3A1A6A' }]}>
+          <View style={[styles.kpiCard, { marginHorizontal: 6, borderColor: criticos > 0 ? colors.borderDanger : colors.border }]}>
             <Ionicons name="nuclear-outline" size={20} color="#F87171" />
             <Text style={[styles.kpiValue, { color: '#F87171' }]}>{criticos}</Text>
             <Text style={styles.kpiLabel}>Críticos</Text>
           </View>
           <View style={[styles.kpiCard, { marginLeft: 6 }]}>
-            <Ionicons name="checkmark-circle-outline" size={20} color="#4ADE80" />
-            <Text style={[styles.kpiValue, { color: '#4ADE80' }]}>{resolvidos.length}</Text>
+            <Ionicons name="checkmark-circle-outline" size={20} color={colors.textGreen} />
+            <Text style={[styles.kpiValue, { color: colors.textGreen }]}>{resolvidos.length}</Text>
             <Text style={styles.kpiLabel}>Resolvidos</Text>
           </View>
         </View>
 
-        {/* ── Escala de Severidade ─────────────────────────────────────────── */}
+        {/* Escala de Severidade */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Ionicons name="bar-chart-outline" size={17} color="#B478F0" />
+            <Ionicons name="bar-chart-outline" size={17} color={colors.accent} />
             <Text style={styles.cardTitle}>Escala de Severidade</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sevRow}>
@@ -256,45 +267,41 @@ export default function Alertas() {
           </Text>
         </View>
 
-        {/* ── Lista de alertas ativos ───────────────────────────────────────── */}
+        {/* Lista de alertas ativos */}
         {ativos.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="checkmark-circle-outline" size={44} color="#3A1A6A" />
+            <Ionicons name="checkmark-circle-outline" size={44} color={colors.border} />
             <Text style={styles.emptyTitle}>Nenhum alerta ativo</Text>
             <Text style={styles.emptySubtitle}>Registre um novo alerta climático para acompanhar em tempo real</Text>
           </View>
         ) : ativos.map(al => {
-          const sevColor  = SEV_COLORS[al.severidade] || '#B478F0';
-          const sevBg     = SEV_BG[al.severidade]     || '#0C0018';
-          const status    = dateStatus(al.data);
+          const sevColor = SEV_COLORS[al.severidade] || colors.accent;
+          const currentSevBg = sevBg[al.severidade] || colors.bgDeep;
+          const status = dateStatus(al.data);
 
           return (
             <View key={al.id} style={[styles.stripeCard, { borderLeftColor: sevColor }]}>
-              {/* Linha de cabeçalho */}
               <View style={styles.stripeHeader}>
                 <View style={{ flex: 1, paddingRight: 8 }}>
                   <Text style={styles.stripeRegiao} numberOfLines={1}>{al.regiao}</Text>
                   <Text style={styles.stripeTipo}>{al.tipo}</Text>
                 </View>
-                <View style={[styles.sevChip, { borderColor: sevColor, backgroundColor: sevBg }]}>
+                <View style={[styles.sevChip, { borderColor: sevColor, backgroundColor: currentSevBg }]}>
                   <Ionicons name={SEV_ICONS[al.severidade] || 'warning-outline'} size={11} color={sevColor} />
                   <Text style={[styles.sevChipText, { color: sevColor }]}>{al.severidade.toUpperCase()}</Text>
                 </View>
               </View>
 
-              {/* Meta: data + fonte */}
               <View style={styles.stripeMeta}>
-                <Ionicons name="calendar-outline" size={11} color="#4A2070" />
+                <Ionicons name="calendar-outline" size={11} color={colors.textMuted} />
                 <Text style={[styles.stripeDate, { color: status.color }]}>{status.label}</Text>
                 <View style={styles.metaDot} />
-                <Ionicons name="satellite-outline" size={11} color="#4A2070" />
+                <Ionicons name="satellite-outline" size={11} color={colors.textMuted} />
                 <Text style={styles.stripeSrc} numberOfLines={1}>{al.fonte}</Text>
               </View>
 
-              {/* Descrição */}
               <Text style={styles.stripeDesc} numberOfLines={2}>{al.descricao}</Text>
 
-              {/* Ações */}
               <View style={styles.cardActions}>
                 <TouchableOpacity style={styles.btnResolver} onPress={() => handleResolver(al.id)} activeOpacity={0.8}>
                   <Ionicons name="checkmark-circle-outline" size={15} color="#FFFFFF" />
@@ -308,11 +315,11 @@ export default function Alertas() {
           );
         })}
 
-        {/* ── Histórico ──────────────────────────────────────────────────────── */}
+        {/* Histórico */}
         {temHistorico && (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons name="time-outline" size={17} color="#B478F0" />
+              <Ionicons name="time-outline" size={17} color={colors.accent} />
               <Text style={styles.cardTitle}>Histórico de Alertas</Text>
             </View>
 
@@ -322,7 +329,7 @@ export default function Alertas() {
                 onPress={() => setFiltro('resolvidos')}
                 activeOpacity={0.75}
               >
-                <Ionicons name="checkmark-circle-outline" size={14} color={filtro === 'resolvidos' ? '#FFFFFF' : '#CCAAFF'} />
+                <Ionicons name="checkmark-circle-outline" size={14} color={filtro === 'resolvidos' ? '#FFFFFF' : colors.textSecondary} />
                 <Text style={[styles.filtroBtnText, filtro === 'resolvidos' && styles.filtroBtnTextAtivo]}>
                   Resolvidos ({resolvidos.length})
                 </Text>
@@ -332,7 +339,7 @@ export default function Alertas() {
                 onPress={() => setFiltro('descartados')}
                 activeOpacity={0.75}
               >
-                <Ionicons name="close-circle-outline" size={14} color={filtro === 'descartados' ? '#FFFFFF' : '#CCAAFF'} />
+                <Ionicons name="close-circle-outline" size={14} color={filtro === 'descartados' ? '#FFFFFF' : colors.textSecondary} />
                 <Text style={[styles.filtroBtnText, filtro === 'descartados' && styles.filtroBtnTextAtivo]}>
                   Descartados ({descartados.length})
                 </Text>
@@ -344,7 +351,7 @@ export default function Alertas() {
                 Nenhum alerta {filtro === 'resolvidos' ? 'resolvido' : 'descartado'}
               </Text>
             ) : historicoFiltrado.map((al, idx) => {
-              const sevColor = SEV_COLORS[al.severidade] || '#B478F0';
+              const sevColor = SEV_COLORS[al.severidade] || colors.accent;
               const isResolvido = al.status === 'resolvido';
               return (
                 <View key={al.id} style={[styles.historicoItem, idx === 0 && { borderTopWidth: 0, paddingTop: 0, marginTop: 0 }]}>
@@ -353,7 +360,7 @@ export default function Alertas() {
                       <Ionicons
                         name={isResolvido ? 'checkmark-circle-outline' : 'close-circle-outline'}
                         size={18}
-                        color={isResolvido ? '#4ADE80' : '#F87171'}
+                        color={isResolvido ? colors.textGreen : '#F87171'}
                       />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -365,11 +372,11 @@ export default function Alertas() {
                     </View>
                   </View>
                   <View style={styles.infoRow}>
-                    <Ionicons name="calendar-outline" size={13} color="#CCAAFF" />
+                    <Ionicons name="calendar-outline" size={13} color={colors.textSecondary} />
                     <Text style={styles.infoText}>{al.data}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Ionicons name="document-text-outline" size={13} color="#CCAAFF" />
+                    <Ionicons name="document-text-outline" size={13} color={colors.textSecondary} />
                     <Text style={styles.infoText} numberOfLines={2}>{al.descricao}</Text>
                   </View>
                 </View>
@@ -378,20 +385,20 @@ export default function Alertas() {
           </View>
         )}
 
-        {/* ── Botões ───────────────────────────────────────────────────────── */}
+        {/* Botões */}
         <TouchableOpacity style={styles.botaoPrimario} onPress={() => setModalVisible(true)} activeOpacity={0.85}>
           <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
           <Text style={styles.textoBotao}>Registrar Alerta</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.botaoSecundario} onPress={() => router.back()} activeOpacity={0.85}>
-          <Ionicons name="arrow-back-outline" size={18} color="#B478F0" />
+          <Ionicons name="arrow-back-outline" size={18} color={colors.accent} />
           <Text style={styles.textoBotaoSec}>Voltar</Text>
         </TouchableOpacity>
 
       </ScrollView>
 
-      {/* ── Modal novo alerta ─────────────────────────────────────────────────── */}
+      {/* Modal novo alerta */}
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.modalOverlay}>
@@ -400,13 +407,12 @@ export default function Alertas() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Novo Alerta Climático</Text>
                 <TouchableOpacity onPress={() => { resetForm(); setModalVisible(false); }}>
-                  <Ionicons name="close-circle-outline" size={26} color="#CCAAFF" />
+                  <Ionicons name="close-circle-outline" size={26} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-                {/* Região */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>REGIÃO AFETADA</Text>
                   <TextInput
@@ -414,13 +420,12 @@ export default function Alertas() {
                     value={regiao}
                     onChangeText={setRegiao}
                     placeholder="ex: Vale do Paraíba — SP"
-                    placeholderTextColor="#4A2070"
+                    placeholderTextColor={colors.placeholder}
                     autoCapitalize="words"
                     maxLength={80}
                   />
                 </View>
 
-                {/* Tipo */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>TIPO DE EVENTO</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
@@ -437,7 +442,6 @@ export default function Alertas() {
                   </ScrollView>
                 </View>
 
-                {/* Severidade */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>SEVERIDADE</Text>
                   <View style={styles.sevPickerRow}>
@@ -447,7 +451,7 @@ export default function Alertas() {
                         style={[
                           styles.sevPickerBtn,
                           { borderColor: SEV_COLORS[sev] },
-                          severidade === sev && { backgroundColor: SEV_BG[sev] },
+                          severidade === sev && { backgroundColor: sevBg[sev] },
                         ]}
                         onPress={() => setSeveridade(sev)}
                         activeOpacity={0.75}
@@ -458,7 +462,6 @@ export default function Alertas() {
                   </View>
                 </View>
 
-                {/* Data */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>DATA PREVISTA (DD/MM/AAAA)</Text>
                   <TextInput
@@ -466,13 +469,12 @@ export default function Alertas() {
                     value={data}
                     onChangeText={handleDataChange}
                     placeholder="ex: 15/06/2026"
-                    placeholderTextColor="#4A2070"
+                    placeholderTextColor={colors.placeholder}
                     keyboardType="number-pad"
                     maxLength={10}
                   />
                 </View>
 
-                {/* Descrição */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>DESCRIÇÃO DO EVENTO</Text>
                   <TextInput
@@ -480,13 +482,12 @@ export default function Alertas() {
                     value={descricao}
                     onChangeText={setDescricao}
                     placeholder="Descreva o evento climático e seus impactos esperados..."
-                    placeholderTextColor="#4A2070"
+                    placeholderTextColor={colors.placeholder}
                     multiline
                     maxLength={200}
                   />
                 </View>
 
-                {/* Fonte */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>FONTE DOS DADOS</Text>
                   <TextInput
@@ -494,14 +495,13 @@ export default function Alertas() {
                     value={fonte}
                     onChangeText={setFonte}
                     placeholder="ex: Sentinel-2 / INPE (padrão)"
-                    placeholderTextColor="#4A2070"
+                    placeholderTextColor={colors.placeholder}
                     maxLength={80}
                   />
                 </View>
 
-                {/* Preview de severidade */}
                 {severidade ? (
-                  <View style={[styles.previewCard, { borderColor: SEV_BORDER[severidade], backgroundColor: SEV_BG[severidade] }]}>
+                  <View style={[styles.previewCard, { borderColor: sevBorder[severidade], backgroundColor: sevBg[severidade] }]}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Ionicons name={SEV_ICONS[severidade]} size={24} color={SEV_COLORS[severidade]} />
                       <View>
@@ -532,7 +532,6 @@ export default function Alertas() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Toast */}
       <Animated.View
         style={[
           styles.toast,
@@ -549,65 +548,64 @@ export default function Alertas() {
   );
 }
 
-const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: '#07000F', padding: 16 },
-  centered:    { flex: 1, backgroundColor: '#07000F', alignItems: 'center', justifyContent: 'center', gap: 14 },
-  loadingText: { color: '#CCAAFF', fontSize: 14 },
+const makeStyles = (c) => StyleSheet.create({
+  container:   { flex: 1, backgroundColor: c.bg, padding: 16 },
+  centered:    { flex: 1, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center', gap: 14 },
+  loadingText: { color: c.textSecondary, fontSize: 14 },
 
   kpiRow: { flexDirection: 'row', marginBottom: 14 },
   kpiCard: {
-    flex: 1, backgroundColor: '#120028', borderRadius: 14, padding: 12,
-    alignItems: 'center', borderWidth: 1, borderColor: '#3A1A6A',
+    flex: 1, backgroundColor: c.card, borderRadius: 14, padding: 12,
+    alignItems: 'center', borderWidth: 1, borderColor: c.border,
     elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2, shadowRadius: 4, gap: 4,
   },
-  kpiValue: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold', textAlign: 'center', marginTop: 4 },
-  kpiLabel: { color: '#CCAAFF', fontSize: 10, textAlign: 'center', letterSpacing: 0.4 },
+  kpiValue: { color: c.textPrimary, fontSize: 14, fontWeight: 'bold', textAlign: 'center', marginTop: 4 },
+  kpiLabel: { color: c.textSecondary, fontSize: 10, textAlign: 'center', letterSpacing: 0.4 },
 
   card: {
-    backgroundColor: '#120028', borderRadius: 16, padding: 16, marginBottom: 14,
-    borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 14,
+    borderWidth: 1, borderColor: c.border,
     elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2, shadowRadius: 4,
   },
   cardHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    marginBottom: 14, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#27104A',
+    marginBottom: 14, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: c.borderFaint,
   },
-  cardTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' },
+  cardTitle: { color: c.textPrimary, fontSize: 15, fontWeight: 'bold' },
 
   sevRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   sevTile: {
     width: 72, alignItems: 'center', paddingVertical: 10,
-    backgroundColor: '#0C0018', borderRadius: 10, borderWidth: 1, gap: 6,
+    backgroundColor: c.bgDeep, borderRadius: 10, borderWidth: 1, gap: 6,
   },
   sevLabel: { fontSize: 11, fontWeight: '700' },
-  sevNote:  { color: '#CCAAFF', fontSize: 12, lineHeight: 18, marginTop: 4 },
+  sevNote:  { color: c.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 4 },
 
   emptyState:    { alignItems: 'center', paddingVertical: 40, gap: 12 },
-  emptyTitle:    { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
-  emptySubtitle: { color: '#CCAAFF', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 16 },
+  emptyTitle:    { color: c.textPrimary, fontSize: 16, fontWeight: 'bold' },
+  emptySubtitle: { color: c.textSecondary, fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 16 },
 
   alHeader:  { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   alIconBox: {
-    width: 40, height: 40, borderRadius: 12, backgroundColor: '#0C0018',
+    width: 40, height: 40, borderRadius: 12, backgroundColor: c.bgDeep,
     alignItems: 'center', justifyContent: 'center', marginRight: 12,
-    borderWidth: 1, borderColor: '#3A1A6A',
+    borderWidth: 1, borderColor: c.border,
   },
   alIconBoxResolvido: { backgroundColor: '#05100A', borderColor: '#0D4020' },
-  alIconBoxDescartado: { backgroundColor: '#120012', borderColor: '#3A0A2A' },
-  alRegiao: { color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' },
-  alTipo:   { color: '#CCAAFF', fontSize: 12, marginTop: 2 },
+  alIconBoxDescartado: { backgroundColor: c.bgDanger, borderColor: c.borderDanger },
+  alRegiao: { color: c.textPrimary, fontSize: 15, fontWeight: 'bold' },
+  alTipo:   { color: c.textSecondary, fontSize: 12, marginTop: 2 },
 
-  // Novo card com faixa lateral
   stripeCard: {
-    backgroundColor: '#120028', borderRadius: 14, padding: 14,
-    marginBottom: 10, borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.card, borderRadius: 14, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: c.border,
     borderLeftWidth: 4,
   },
   stripeHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
-  stripeRegiao: { fontSize: 15, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 2 },
-  stripeTipo:   { fontSize: 11, color: '#CCAAFF' },
+  stripeRegiao: { fontSize: 15, fontWeight: 'bold', color: c.textPrimary, marginBottom: 2 },
+  stripeTipo:   { fontSize: 11, color: c.textSecondary },
   sevChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     borderWidth: 1, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4,
@@ -615,15 +613,15 @@ const styles = StyleSheet.create({
   sevChipText: { fontSize: 8, fontWeight: '800', letterSpacing: 1 },
   stripeMeta: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
   stripeDate: { fontSize: 11, fontWeight: '600' },
-  metaDot:    { width: 3, height: 3, borderRadius: 2, backgroundColor: '#27104A' },
-  stripeSrc:  { fontSize: 10, color: '#4A2070', flex: 1 },
-  stripeDesc: { fontSize: 12, color: '#CCAAFF', lineHeight: 17, marginBottom: 12 },
+  metaDot:    { width: 3, height: 3, borderRadius: 2, backgroundColor: c.borderFaint },
+  stripeSrc:  { fontSize: 10, color: c.textMuted, flex: 1 },
+  stripeDesc: { fontSize: 12, color: c.textSecondary, lineHeight: 17, marginBottom: 12 },
 
-  sevBadge:     { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#0C0018' },
+  sevBadge:     { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: c.bgDeep },
   sevBadgeText: { fontSize: 11, fontWeight: 'bold' },
 
   infoRow:  { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 6 },
-  infoText: { color: '#CCAAFF', fontSize: 13, flex: 1 },
+  infoText: { color: c.textSecondary, fontSize: 13, flex: 1 },
 
   cardActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
   btnResolver: {
@@ -633,64 +631,64 @@ const styles = StyleSheet.create({
   btnResolverText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
   btnDescartar: {
     width: 44, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: '#3A0A2A', borderRadius: 10, backgroundColor: '#120012',
+    borderWidth: 1, borderColor: c.borderDanger, borderRadius: 10, backgroundColor: c.bgDanger,
   },
 
   filtroRow:          { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  filtroBtn:          { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 9, borderRadius: 9, backgroundColor: '#0C0018', borderWidth: 1, borderColor: '#3A1A6A' },
+  filtroBtn:          { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 9, borderRadius: 9, backgroundColor: c.bgDeep, borderWidth: 1, borderColor: c.border },
   filtroBtnResolvido: { backgroundColor: '#05100A', borderColor: '#4ADE80' },
-  filtroBtnDescartado:{ backgroundColor: '#120012', borderColor: '#F87171' },
-  filtroBtnText:      { color: '#CCAAFF', fontSize: 12, fontWeight: '600' },
+  filtroBtnDescartado:{ backgroundColor: c.bgDanger, borderColor: '#F87171' },
+  filtroBtnText:      { color: c.textSecondary, fontSize: 12, fontWeight: '600' },
   filtroBtnTextAtivo: { color: '#FFFFFF' },
-  historicoVazio:     { color: '#4A2070', fontSize: 14, textAlign: 'center', paddingVertical: 16 },
-  historicoItem:      { borderTopWidth: 1, borderTopColor: '#27104A', paddingTop: 14, marginTop: 14 },
+  historicoVazio:     { color: c.textMuted, fontSize: 14, textAlign: 'center', paddingVertical: 16 },
+  historicoItem:      { borderTopWidth: 1, borderTopColor: c.borderFaint, paddingTop: 14, marginTop: 14 },
 
   botaoPrimario: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#7B2FBE', paddingVertical: 15, borderRadius: 12,
+    backgroundColor: c.accentBtn, paddingVertical: 15, borderRadius: 12,
     gap: 8, marginBottom: 12, elevation: 6,
-    shadowColor: '#7B2FBE', shadowOffset: { width: 0, height: 4 },
+    shadowColor: c.accentBtn, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45, shadowRadius: 8,
   },
   botaoSecundario: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, borderColor: '#3A1A6A',
+    paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, borderColor: c.border,
     gap: 8, marginBottom: 32,
   },
   textoBotao:    { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
-  textoBotaoSec: { color: '#B478F0', fontWeight: 'bold', fontSize: 16 },
+  textoBotaoSec: { color: c.accent, fontWeight: 'bold', fontSize: 16 },
 
   modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
   modalContainer: {
-    backgroundColor: '#120028', borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 20, maxHeight: '92%', borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 20, maxHeight: '92%', borderWidth: 1, borderColor: c.border,
   },
   modalHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    marginBottom: 16, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#27104A',
+    marginBottom: 16, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: c.borderFaint,
   },
-  modalTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: 'bold' },
+  modalTitle: { color: c.textPrimary, fontSize: 17, fontWeight: 'bold' },
 
   inputGroup: { marginBottom: 14 },
-  inputLabel: { fontSize: 11, color: '#CCAAFF', fontWeight: '700', letterSpacing: 1.2, marginBottom: 7 },
+  inputLabel: { fontSize: 11, color: c.textSecondary, fontWeight: '700', letterSpacing: 1.2, marginBottom: 7 },
   input: {
-    backgroundColor: '#0C0018', color: '#FFFFFF', borderRadius: 10,
+    backgroundColor: c.bgDeep, color: c.textPrimary, borderRadius: 10,
     paddingHorizontal: 14, height: 48, fontSize: 15,
-    borderWidth: 1, borderColor: '#3A1A6A',
+    borderWidth: 1, borderColor: c.border,
   },
 
   chipBtn: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 9,
-    backgroundColor: '#0C0018', borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.bgDeep, borderWidth: 1, borderColor: c.border,
   },
-  chipBtnAtivo:  { backgroundColor: '#1A0A40', borderColor: '#B478F0' },
-  chipText:      { color: '#CCAAFF', fontSize: 13, fontWeight: '600' },
-  chipTextAtivo: { color: '#FFFFFF' },
+  chipBtnAtivo:  { backgroundColor: c.cardElevated, borderColor: c.accent },
+  chipText:      { color: c.textSecondary, fontSize: 13, fontWeight: '600' },
+  chipTextAtivo: { color: c.textPrimary },
 
   sevPickerRow: { flexDirection: 'row', gap: 8 },
   sevPickerBtn: {
     flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 9,
-    borderWidth: 1, backgroundColor: '#0C0018',
+    borderWidth: 1, backgroundColor: c.bgDeep,
   },
   sevPickerText: { fontSize: 12, fontWeight: '700' },
 
@@ -698,8 +696,8 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 14, marginBottom: 16,
     borderWidth: 1,
   },
-  previewSev:  { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
-  previewNote: { color: '#CCAAFF', fontSize: 12, marginTop: 2 },
+  previewSev:  { fontSize: 16, fontWeight: 'bold' },
+  previewNote: { color: c.textSecondary, fontSize: 12, marginTop: 2 },
 
   toast: {
     position: 'absolute', bottom: 28, right: 16,

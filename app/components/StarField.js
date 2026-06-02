@@ -10,7 +10,7 @@ const generateStars = (count) =>
     top: ((i * 53 + 7) % 90) + 2,
   }));
 
-export default function StarField({ count = 150 }) {
+export default function StarField({ count = 150, color = '#FFFFFF' }) {
   const stars = useMemo(() => generateStars(count), [count]);
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -22,7 +22,7 @@ export default function StarField({ count = 150 }) {
             width: s.size,
             height: s.size,
             borderRadius: s.size,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: color,
             opacity: s.opacity,
             left: `${s.left}%`,
             top: `${s.top}%`,

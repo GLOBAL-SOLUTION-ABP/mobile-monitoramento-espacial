@@ -1,4 +1,4 @@
-﻿import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View, Platform, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,9 +6,11 @@ import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import { runRetentionPolicy } from "./utils/retention";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 
 function MenuHeaderButton() {
   const router = useRouter();
+  const { colors } = useTheme();
   return (
     <TouchableOpacity
       onPress={() => router.replace('/menu')}
@@ -19,14 +21,14 @@ function MenuHeaderButton() {
         width: 34,
         height: 34,
         borderRadius: 17,
-        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+        backgroundColor: 'rgba(128, 128, 128, 0.15)',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: colors.border,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Ionicons name="home-outline" size={18} color="#FFFFFF" />
+      <Ionicons name="home-outline" size={18} color={colors.textPrimary} />
     </TouchableOpacity>
   );
 }
@@ -38,6 +40,31 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+function ThemedLayout() {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg, overflow: "hidden" }}>
+      <StatusBar style={colors.statusBar} />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
+          headerTitleStyle: { fontWeight: "bold", fontSize: 17 },
+          contentStyle: { backgroundColor: colors.bg },
+          animation: "slide_from_right",
+        }}
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="menu" options={{ headerShown: false }} />
+        <Stack.Screen name="nova-conta" options={{ title: "Criar Conta" }} />
+        <Stack.Screen name="cadastro" options={{ title: "Registrar Região", headerRight: () => <MenuHeaderButton /> }} />
+        <Stack.Screen name="registros" options={{ title: "Monitoramento", headerRight: () => <MenuHeaderButton /> }} />
+        <Stack.Screen name="alertas" options={{ title: "Alertas Climáticos", headerRight: () => <MenuHeaderButton /> }} />
+      </Stack>
+    </View>
+  );
+}
 
 export default function Layout() {
   useEffect(() => {
@@ -59,26 +86,10 @@ export default function Layout() {
   }, []);
 
   return (
-    <AuthProvider>
-    <View style={{ flex: 1, backgroundColor: "#07000F", overflow: "hidden" }}>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: "#120028" },
-          headerTintColor: "#FFFFFF",
-          headerTitleStyle: { fontWeight: "bold", fontSize: 17 },
-          contentStyle: { backgroundColor: "#07000F" },
-          animation: "slide_from_right",
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="menu" options={{ headerShown: false }} />
-        <Stack.Screen name="nova-conta" options={{ title: "Criar Conta" }} />
-        <Stack.Screen name="cadastro" options={{ title: "Registrar Região", headerRight: () => <MenuHeaderButton /> }} />
-        <Stack.Screen name="registros" options={{ title: "Monitoramento", headerRight: () => <MenuHeaderButton /> }} />
-        <Stack.Screen name="alertas" options={{ title: "Alertas Climáticos", headerRight: () => <MenuHeaderButton /> }} />
-      </Stack>
-    </View>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ThemedLayout />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

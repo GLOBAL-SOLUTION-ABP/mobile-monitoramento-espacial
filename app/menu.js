@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logger } from './utils/logger';
 import { hasPermission } from './utils/rbac';
 import { useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
 import StarField from './components/StarField';
 import RoleBadge from './components/RoleBadge';
 
@@ -16,11 +17,12 @@ const MENU_ITEMS = [
   { key: 'sair',      icon: 'power-outline',     title: 'Encerrar Sessão', subtitle: 'Sair do sistema com segurança',          danger: true },
 ];
 
-
 export default function Menu() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { session, loading, logout } = useAuth();
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
     if (!loading && !session) router.replace('/');
@@ -49,17 +51,20 @@ export default function Menu() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }]}
       showsVerticalScrollIndicator={false}
     >
-      <StarField count={90} />
+      <StarField count={90} color={colors.starColor} />
 
-      {/* Cabeçalho galáxia */}
+      {/* Cabeçalho */}
       <View style={styles.galaxyHeader}>
         <View style={styles.galaxyIconWrap}>
-          <Ionicons name="planet-outline" size={26} color="#B478F0" />
+          <Ionicons name="planet-outline" size={26} color={colors.accent} />
         </View>
         <View style={{ flex: 1, marginLeft: 12 }}>
           <Text style={styles.galaxyTitle}>SatGuard</Text>
           <Text style={styles.galaxySub}>Sistema de Monitoramento Climático</Text>
         </View>
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle} activeOpacity={0.7}>
+          <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={17} color={colors.accent} />
+        </TouchableOpacity>
         <View style={styles.liveChip}>
           <View style={styles.liveDot} />
           <Text style={styles.liveText}>LIVE</Text>
@@ -70,7 +75,7 @@ export default function Menu() {
       <View style={styles.userCard}>
         <View style={styles.userAvatarRing}>
           <View style={styles.userAvatar}>
-            <Ionicons name="person-outline" size={22} color="#B478F0" />
+            <Ionicons name="person-outline" size={22} color={colors.accent} />
           </View>
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
@@ -82,10 +87,9 @@ export default function Menu() {
 
       <Text style={styles.sectionLabel}>PAINEL DE CONTROLE</Text>
 
-      {/* Lista vertical de itens */}
       {MENU_ITEMS.map((item, idx) => {
         const locked = !!(item.permission && !hasPermission(role, item.permission));
-        const iconColor = locked ? '#4A2070' : item.danger ? '#F87171' : '#B478F0';
+        const iconColor = locked ? colors.textMuted : item.danger ? colors.textDanger : colors.accent;
         const isLast = idx === MENU_ITEMS.length - 1;
         return (
           <TouchableOpacity
@@ -132,15 +136,14 @@ export default function Menu() {
             </View>
 
             {!item.danger && !locked && (
-              <Ionicons name="chevron-forward-outline" size={16} color="#3A1A6A" style={{ marginLeft: 8 }} />
+              <Ionicons name="chevron-forward-outline" size={16} color={colors.border} style={{ marginLeft: 8 }} />
             )}
           </TouchableOpacity>
         );
       })}
 
-      {/* Fonte de dados */}
       <View style={styles.sourceTile}>
-        <Ionicons name="satellite-outline" size={12} color="#3A1A6A" />
+        <Ionicons name="satellite-outline" size={12} color={colors.textMuted} />
         <Text style={styles.sourceText}>Sentinel-2 · INPE · NASA FIRMS</Text>
         <View style={styles.sourceDot} />
       </View>
@@ -150,87 +153,88 @@ export default function Menu() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#07000F' },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg },
   content:   { paddingHorizontal: 20 },
 
-  // Cabeçalho galáxia
   galaxyHeader: {
     flexDirection: 'row', alignItems: 'center', marginBottom: 18,
   },
   galaxyIconWrap: {
     width: 48, height: 48, borderRadius: 14,
-    backgroundColor: '#1A003A', borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.cardElevated, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  galaxyTitle: { fontSize: 19, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.5 },
-  galaxySub:   { fontSize: 10, color: '#4A2070', marginTop: 2, letterSpacing: 0.3 },
+  galaxyTitle: { fontSize: 19, fontWeight: '800', color: c.textPrimary, letterSpacing: 0.5 },
+  galaxySub:   { fontSize: 10, color: c.textMuted, marginTop: 2, letterSpacing: 0.3 },
+  themeToggle: {
+    width: 34, height: 34, borderRadius: 17, marginRight: 8,
+    backgroundColor: c.cardElevated, borderWidth: 1, borderColor: c.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
   liveChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#05100A', borderWidth: 1, borderColor: '#0D4020',
+    backgroundColor: c.bgDeep, borderWidth: 1, borderColor: c.borderFaint,
     borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5,
   },
   liveDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ADE80' },
   liveText: { fontSize: 9, fontWeight: '800', color: '#4ADE80', letterSpacing: 1.5 },
 
-  // Card do operador
   userCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#120028', borderRadius: 20, padding: 18,
-    marginBottom: 24, borderWidth: 1, borderColor: '#3A1A6A',
-    elevation: 10, shadowColor: '#B478F0',
+    backgroundColor: c.card, borderRadius: 20, padding: 18,
+    marginBottom: 24, borderWidth: 1, borderColor: c.border,
+    elevation: 10, shadowColor: c.accent,
     shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 16,
   },
   userAvatarRing: {
     width: 52, height: 52, borderRadius: 26,
-    borderWidth: 1.5, borderColor: '#B478F0',
+    borderWidth: 1.5, borderColor: c.accent,
     alignItems: 'center', justifyContent: 'center',
   },
   userAvatar: {
     width: 42, height: 42, borderRadius: 21,
-    backgroundColor: '#1A003A', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.cardElevated, alignItems: 'center', justifyContent: 'center',
   },
-  userLabel: { fontSize: 9, color: '#4A2070', fontWeight: '700', letterSpacing: 2 },
-  userName:  { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginTop: 2 },
+  userLabel: { fontSize: 9, color: c.textMuted, fontWeight: '700', letterSpacing: 2 },
+  userName:  { fontSize: 18, fontWeight: 'bold', color: c.textPrimary, marginTop: 2 },
   sectionLabel: {
-    fontSize: 9, color: '#4A2070', fontWeight: '700',
+    fontSize: 9, color: c.textMuted, fontWeight: '700',
     letterSpacing: 3, marginBottom: 12,
   },
 
-  // Cards verticais
   menuCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#120028', borderRadius: 18, padding: 16,
-    marginBottom: 10, borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.card, borderRadius: 18, padding: 16,
+    marginBottom: 10, borderWidth: 1, borderColor: c.border,
     elevation: 4, shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 6,
   },
-  menuCardDanger: { borderColor: '#3A0A2A', backgroundColor: '#0E000E' },
+  menuCardDanger: { borderColor: c.borderDanger, backgroundColor: c.bgDanger },
   menuCardLocked: { opacity: 0.4 },
 
   menuIconBox: {
     width: 48, height: 48, borderRadius: 14,
-    backgroundColor: '#1A003A', borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.cardElevated, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center', marginRight: 14,
   },
-  menuIconBoxDanger: { backgroundColor: '#0A0010', borderColor: '#3A0A2A' },
-  menuIconBoxLocked: { borderColor: '#27104A', backgroundColor: '#0A0018' },
+  menuIconBoxDanger: { backgroundColor: c.bgDanger, borderColor: c.borderDanger },
+  menuIconBoxLocked: { borderColor: c.borderFaint, backgroundColor: c.bgDeep },
 
   menuTextBlock: { flex: 1 },
-  menuTitle:     { fontSize: 15, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 3 },
-  menuTitleDanger: { color: '#F87171' },
-  menuTitleLocked: { color: '#4A2070' },
-  menuSubtitle:        { fontSize: 11, color: '#CCAAFF', lineHeight: 15 },
-  menuSubtitleLocked:  { color: '#27104A' },
+  menuTitle:     { fontSize: 15, fontWeight: 'bold', color: c.textPrimary, marginBottom: 3 },
+  menuTitleDanger: { color: c.textDanger },
+  menuTitleLocked: { color: c.textMuted },
+  menuSubtitle:        { fontSize: 11, color: c.textSecondary, lineHeight: 15 },
+  menuSubtitleLocked:  { color: c.borderFaint },
 
-  // Rodapé
   sourceTile: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     marginTop: 20, marginBottom: 10, paddingVertical: 8, paddingHorizontal: 12,
-    backgroundColor: '#0C0018', borderRadius: 10,
-    borderWidth: 1, borderColor: '#1A003A',
+    backgroundColor: c.bgDeep, borderRadius: 10,
+    borderWidth: 1, borderColor: c.cardElevated,
   },
-  sourceText: { flex: 1, color: '#3A1A6A', fontSize: 10, letterSpacing: 0.5 },
+  sourceText: { flex: 1, color: c.textMuted, fontSize: 10, letterSpacing: 0.5 },
   sourceDot:  { width: 5, height: 5, borderRadius: 3, backgroundColor: '#4ADE80' },
-  footer:     { textAlign: 'center', color: '#27104A', fontSize: 10, letterSpacing: 0.5 },
+  footer:     { textAlign: 'center', color: c.textFaint, fontSize: 10, letterSpacing: 0.5 },
 });

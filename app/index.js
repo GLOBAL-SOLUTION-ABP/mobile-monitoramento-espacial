@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, Animated,
@@ -14,6 +14,7 @@ import { hashPassword, decryptData, encryptData } from './utils/crypto';
 import { logger } from './utils/logger';
 import { checkLockout, recordFailure, clearFailures } from './utils/bruteForce';
 import { useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
 import StarField from './components/StarField';
 
 const USUARIOS_KEY = '@usuarios';
@@ -30,6 +31,9 @@ export default function Login() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login, session, loading: loadingAuth } = useAuth();
+  const { colors, isDark, toggleTheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [focusedField, setFocusedField] = useState(null);
@@ -124,21 +128,20 @@ export default function Login() {
       style={styles.keyboardView}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StarField count={110} />
+      <StarField count={110} color={colors.starColor} />
 
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Seção do logo */}
+        {/* Logo */}
         <View style={styles.logoSection}>
-          {/* Anel de órbita */}
           <View style={styles.orbitRing}>
             <View style={styles.orbitDot} />
           </View>
           <View style={styles.logoBox}>
-            <Ionicons name="planet-outline" size={58} color="#B478F0" />
+            <Ionicons name="planet-outline" size={58} color={colors.accent} />
           </View>
           <Text style={styles.appName}>SatGuard</Text>
           <View style={styles.subtitleRow}>
@@ -152,18 +155,18 @@ export default function Login() {
         {/* Card de login */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <Ionicons name="shield-checkmark-outline" size={16} color="#B478F0" />
+            <Ionicons name="shield-checkmark-outline" size={16} color={colors.accent} />
             <Text style={styles.cardTitle}>Acesso ao Sistema</Text>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>E-MAIL</Text>
             <View style={[styles.inputWrapper, focusedField === 'email' && styles.inputWrapperFocused]}>
-              <Ionicons name="mail-outline" size={18} color="#B478F0" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={18} color={colors.accent} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Digite seu e-mail"
-                placeholderTextColor="#4A2070"
+                placeholderTextColor={colors.placeholder}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -178,11 +181,11 @@ export default function Login() {
           <View style={[styles.inputGroup, { marginBottom: 0 }]}>
             <Text style={styles.label}>SENHA</Text>
             <View style={[styles.inputWrapper, focusedField === 'senha' && styles.inputWrapperFocused]}>
-              <Ionicons name="lock-closed-outline" size={18} color="#B478F0" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={18} color={colors.accent} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Digite sua senha"
-                placeholderTextColor="#4A2070"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showSenha}
                 value={senha}
                 onChangeText={setSenha}
@@ -191,7 +194,7 @@ export default function Login() {
                 onBlur={() => setFocusedField(null)}
               />
               <TouchableOpacity onPress={() => setShowSenha(p => !p)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name={showSenha ? 'eye-off-outline' : 'eye-outline'} size={18} color="#B478F0" />
+                <Ionicons name={showSenha ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.accent} />
               </TouchableOpacity>
             </View>
           </View>
@@ -206,7 +209,7 @@ export default function Login() {
         <TouchableOpacity style={styles.linkCadastro} onPress={() => router.push('/nova-conta')} activeOpacity={0.8}>
           <Text style={styles.linkCadastroText}>Novo operador? </Text>
           <Text style={styles.linkCadastroDestaque}>Criar conta</Text>
-          <Ionicons name="arrow-forward-outline" size={13} color="#B478F0" style={{ marginLeft: 3 }} />
+          <Ionicons name="arrow-forward-outline" size={13} color={colors.accent} style={{ marginLeft: 3 }} />
         </TouchableOpacity>
 
         <View style={styles.footerRow}>
@@ -216,7 +219,15 @@ export default function Login() {
         </View>
       </ScrollView>
 
-      {/* Toast */}
+      {/* Toggle de tema */}
+      <TouchableOpacity
+        onPress={toggleTheme}
+        style={[styles.themeToggle, { top: insets.top + 12 }]}
+        activeOpacity={0.7}
+      >
+        <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={17} color={colors.accent} />
+      </TouchableOpacity>
+
       <Animated.View
         style={[
           styles.toast,
@@ -235,82 +246,80 @@ export default function Login() {
   );
 }
 
-const styles = StyleSheet.create({
-  keyboardView: { flex: 1, backgroundColor: '#07000F' },
+const makeStyles = (c) => StyleSheet.create({
+  keyboardView: { flex: 1, backgroundColor: c.bg },
   container: {
     flexGrow: 1, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 24,
   },
 
-  // Logo section
   logoSection: { alignItems: 'center', marginBottom: 32, position: 'relative' },
   orbitRing: {
     position: 'absolute', top: -10, width: 130, height: 130,
-    borderRadius: 65, borderWidth: 1, borderColor: '#3A1A6A',
+    borderRadius: 65, borderWidth: 1, borderColor: c.border,
     borderStyle: 'dashed', alignItems: 'flex-end', justifyContent: 'flex-start',
   },
   orbitDot: {
     width: 8, height: 8, borderRadius: 4,
-    backgroundColor: '#B478F0', margin: 14,
-    shadowColor: '#B478F0', shadowOffset: { width: 0, height: 0 },
+    backgroundColor: c.accent, margin: 14,
+    shadowColor: c.accent, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1, shadowRadius: 6, elevation: 4,
   },
   logoBox: {
     width: 110, height: 110, borderRadius: 30,
-    backgroundColor: '#120028',
+    backgroundColor: c.card,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: '#3A1A6A',
-    shadowColor: '#B478F0', shadowOffset: { width: 0, height: 0 },
+    borderWidth: 1.5, borderColor: c.border,
+    shadowColor: c.accent, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5, shadowRadius: 24, elevation: 12,
     marginBottom: 20,
   },
   appName: {
-    fontSize: 38, fontWeight: '900', color: '#FFFFFF',
+    fontSize: 38, fontWeight: '900', color: c.textPrimary,
     letterSpacing: 2, textAlign: 'center',
   },
   subtitleRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8, marginBottom: 8,
   },
-  subtitleLine: { height: 1, width: 30, backgroundColor: '#3A1A6A' },
+  subtitleLine: { height: 1, width: 30, backgroundColor: c.border },
   appSubtitle: {
-    fontSize: 9, color: '#B478F0', letterSpacing: 2.5,
+    fontSize: 9, color: c.accent, letterSpacing: 2.5,
     fontWeight: '700', textAlign: 'center',
   },
   appTagline: {
-    fontSize: 11, color: '#4A2070', letterSpacing: 1, textAlign: 'center',
+    fontSize: 11, color: c.textMuted, letterSpacing: 1, textAlign: 'center',
   },
 
-  // Card
   card: {
-    width: '100%', backgroundColor: '#120028', borderRadius: 24, padding: 24,
-    borderWidth: 1, borderColor: '#3A1A6A',
-    shadowColor: '#B478F0', shadowOffset: { width: 0, height: 0 },
+    width: '100%', backgroundColor: c.card, borderRadius: 24, padding: 24,
+    borderWidth: 1, borderColor: c.border,
+    shadowColor: c.accent, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.12, shadowRadius: 20, elevation: 12,
   },
   cardHeaderRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     marginBottom: 22, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: '#27104A',
+    borderBottomWidth: 1, borderBottomColor: c.borderFaint,
   },
-  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#FFFFFF' },
+  cardTitle: { fontSize: 16, fontWeight: 'bold', color: c.textPrimary },
 
   inputGroup: { marginBottom: 16 },
-  label: { fontSize: 9, color: '#CCAAFF', fontWeight: '700', letterSpacing: 2, marginBottom: 8 },
+  label: { fontSize: 9, color: c.textSecondary, fontWeight: '700', letterSpacing: 2, marginBottom: 8 },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0C0018', borderRadius: 12,
-    borderWidth: 1, borderColor: '#3A1A6A', paddingHorizontal: 14,
+    backgroundColor: c.bgDeep, borderRadius: 12,
+    borderWidth: 1, borderColor: c.border, paddingHorizontal: 14,
     height: 52,
   },
-  inputWrapperFocused: { borderColor: '#B478F0' },
+  inputWrapperFocused: { borderColor: c.borderFocus },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, color: '#FFFFFF', fontSize: 15 },
+  input: { flex: 1, color: c.textPrimary, fontSize: 15 },
 
   botao: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#7B2FBE', paddingVertical: 16, borderRadius: 14,
+    backgroundColor: c.accentBtn, paddingVertical: 16, borderRadius: 14,
     marginTop: 20, gap: 10, elevation: 8,
-    shadowColor: '#7B2FBE', shadowOffset: { width: 0, height: 6 },
+    shadowColor: c.accentBtn, shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.6, shadowRadius: 14,
   },
   textoBotao: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 15 },
@@ -319,12 +328,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     marginTop: 20, paddingVertical: 10,
   },
-  linkCadastroText:     { color: '#CCAAFF', fontSize: 14 },
-  linkCadastroDestaque: { color: '#B478F0', fontSize: 14, fontWeight: 'bold' },
+  linkCadastroText:     { color: c.textSecondary, fontSize: 14 },
+  linkCadastroDestaque: { color: c.accent, fontSize: 14, fontWeight: 'bold' },
 
   footerRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20 },
-  footerDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#27104A' },
-  footer:    { color: '#27104A', fontSize: 10, letterSpacing: 0.5 },
+  footerDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: c.borderFaint },
+  footer:    { color: c.textFaint, fontSize: 10, letterSpacing: 0.5 },
 
   toast: {
     position: 'absolute', bottom: 28, right: 16,
@@ -338,4 +347,13 @@ const styles = StyleSheet.create({
   toastError:   { backgroundColor: '#5A0A1A' },
   toastWarning: { backgroundColor: '#5A1A00' },
   toastText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600', flex: 1 },
+
+  themeToggle: {
+    position: 'absolute', right: 16,
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: c.card, borderWidth: 1, borderColor: c.border,
+    alignItems: 'center', justifyContent: 'center',
+    elevation: 6, shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4,
+  },
 });

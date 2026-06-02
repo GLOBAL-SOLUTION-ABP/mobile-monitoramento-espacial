@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import StarField from './components/StarField';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -15,6 +15,7 @@ import { checkRateLimit } from './utils/rateLimiter';
 import { logger } from './utils/logger';
 import { ROLE_LABELS, ROLE_COLORS, hasPermission } from './utils/rbac';
 import { useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
 
 const notify = async (title, body) => {
   if (Platform.OS === 'web') return;
@@ -81,6 +82,8 @@ export default function Cadastro() {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const { session, loading: loadingAuth } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const role = session?.role || null;
 
   const [nome, setNome] = useState('');
@@ -236,14 +239,13 @@ export default function Cadastro() {
 
   return (
     <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <StarField />
+      <StarField color={colors.starColor} />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
-        {/* Cabeçalho com steps visuais */}
         <View style={styles.pageHeader}>
           <View style={styles.pageHeaderLeft}>
             <View style={styles.pageIconBig}>
-              <Ionicons name="location-outline" size={28} color="#B478F0" />
+              <Ionicons name="location-outline" size={28} color={colors.accent} />
             </View>
             <View style={{ marginLeft: 14, flex: 1 }}>
               <Text style={styles.pageTitle}>Nova Região</Text>
@@ -258,7 +260,6 @@ export default function Cadastro() {
           )}
         </View>
 
-        {/* Indicador de etapas */}
         <View style={styles.stepsRow}>
           <View style={[styles.stepItem, styles.stepActive]}>
             <Text style={styles.stepNum}>1</Text>
@@ -274,20 +275,19 @@ export default function Cadastro() {
         {/* Card localização */}
         <View style={styles.card}>
           <View style={styles.satTag}>
-            <Ionicons name="planet-outline" size={12} color="#B478F0" />
+            <Ionicons name="planet-outline" size={12} color={colors.accent} />
             <Text style={styles.satTagText}>ETAPA 1 — IDENTIFICAÇÃO</Text>
           </View>
 
-          {/* Nome */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="text-outline" size={13} color={errors.nome ? '#F87171' : '#B478F0'} />
+              <Ionicons name="text-outline" size={13} color={errors.nome ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.nome && styles.labelError]}>NOME DA REGIÃO</Text>
             </View>
             <TextInput
               style={[styles.input, focused === 'nome' && styles.inputFocused, errors.nome && styles.inputError]}
               placeholder="ex: Vale do Paraíba"
-              placeholderTextColor="#4A2070"
+              placeholderTextColor={colors.placeholder}
               value={nome}
               onChangeText={v => { setNome(v); if (errors.nome) setErrors(p => ({ ...p, nome: false })); }}
               maxLength={80}
@@ -296,10 +296,9 @@ export default function Cadastro() {
             />
           </View>
 
-          {/* Estado */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="map-outline" size={13} color={errors.estado ? '#F87171' : '#B478F0'} />
+              <Ionicons name="map-outline" size={13} color={errors.estado ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.estado && styles.labelError]}>ESTADO</Text>
             </View>
             <TouchableOpacity
@@ -310,20 +309,19 @@ export default function Cadastro() {
               <Text style={estado ? styles.selectorText : styles.selectorPlaceholder} numberOfLines={1}>
                 {estado ? estado.nome : 'Toque para selecionar o estado'}
               </Text>
-              <Ionicons name="chevron-down-outline" size={16} color="#B478F0" />
+              <Ionicons name="chevron-down-outline" size={16} color={colors.accent} />
             </TouchableOpacity>
           </View>
 
-          {/* Cidade */}
           <View style={[styles.inputGroup, { marginBottom: 0 }]}>
             <View style={styles.labelRow}>
-              <Ionicons name="business-outline" size={13} color={errors.cidade ? '#F87171' : '#B478F0'} />
+              <Ionicons name="business-outline" size={13} color={errors.cidade ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.cidade && styles.labelError]}>CIDADE DE REFERÊNCIA</Text>
             </View>
             <TextInput
               style={[styles.input, focused === 'cidade' && styles.inputFocused, errors.cidade && styles.inputError]}
               placeholder="ex: São José dos Campos"
-              placeholderTextColor="#4A2070"
+              placeholderTextColor={colors.placeholder}
               value={cidade}
               onChangeText={v => { setCidade(v); if (errors.cidade) setErrors(p => ({ ...p, cidade: false })); }}
               maxLength={60}
@@ -336,14 +334,13 @@ export default function Cadastro() {
         {/* Card parâmetros */}
         <View style={styles.card}>
           <View style={styles.satTag}>
-            <Ionicons name="analytics-outline" size={12} color="#B478F0" />
+            <Ionicons name="analytics-outline" size={12} color={colors.accent} />
             <Text style={styles.satTagText}>ETAPA 2 — PARÂMETROS</Text>
           </View>
 
-          {/* Tipo */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="warning-outline" size={13} color={errors.tipo ? '#F87171' : '#B478F0'} />
+              <Ionicons name="warning-outline" size={13} color={errors.tipo ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.tipo && styles.labelError]}>TIPO DE RISCO</Text>
             </View>
             <TouchableOpacity
@@ -354,20 +351,19 @@ export default function Cadastro() {
               <Text style={tipo ? styles.selectorText : styles.selectorPlaceholder} numberOfLines={1}>
                 {tipo ? tipo.nome : 'Toque para selecionar o tipo'}
               </Text>
-              <Ionicons name="chevron-down-outline" size={16} color="#B478F0" />
+              <Ionicons name="chevron-down-outline" size={16} color={colors.accent} />
             </TouchableOpacity>
           </View>
 
-          {/* Área */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="resize-outline" size={13} color={errors.area ? '#F87171' : '#B478F0'} />
+              <Ionicons name="resize-outline" size={13} color={errors.area ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.area && styles.labelError]}>ÁREA APROXIMADA (KM²)</Text>
             </View>
             <TextInput
               style={[styles.input, focused === 'area' && styles.inputFocused, errors.area && styles.inputError]}
               placeholder="ex: 2890"
-              placeholderTextColor="#4A2070"
+              placeholderTextColor={colors.placeholder}
               keyboardType="decimal-pad"
               value={area}
               onChangeText={v => { setArea(v); if (errors.area) setErrors(p => ({ ...p, area: false })); }}
@@ -377,10 +373,9 @@ export default function Cadastro() {
             />
           </View>
 
-          {/* Nível de Risco */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="alert-circle-outline" size={13} color={errors.nivel ? '#F87171' : '#B478F0'} />
+              <Ionicons name="alert-circle-outline" size={13} color={errors.nivel ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.nivel && styles.labelError]}>NÍVEL DE RISCO</Text>
             </View>
             <TouchableOpacity
@@ -396,20 +391,19 @@ export default function Cadastro() {
               ) : (
                 <Text style={styles.selectorPlaceholder}>Toque para selecionar o nível</Text>
               )}
-              <Ionicons name="chevron-down-outline" size={16} color="#B478F0" />
+              <Ionicons name="chevron-down-outline" size={16} color={colors.accent} />
             </TouchableOpacity>
           </View>
 
-          {/* Descrição */}
           <View style={[styles.inputGroup, { marginBottom: 0 }]}>
             <View style={styles.labelRow}>
-              <Ionicons name="document-text-outline" size={13} color="#B478F0" />
+              <Ionicons name="document-text-outline" size={13} color={colors.accent} />
               <Text style={styles.label}>DESCRIÇÃO (OPCIONAL)</Text>
             </View>
             <TextInput
               style={[styles.input, styles.inputMultiline, focused === 'descricao' && styles.inputFocused]}
               placeholder="Contexto adicional sobre a região e os riscos..."
-              placeholderTextColor="#4A2070"
+              placeholderTextColor={colors.placeholder}
               value={descricao}
               onChangeText={setDescricao}
               maxLength={200}
@@ -421,13 +415,11 @@ export default function Cadastro() {
           </View>
         </View>
 
-        {/* Fonte */}
         <View style={styles.fonteBanner}>
-          <Ionicons name="satellite-outline" size={14} color="#5A2A8A" />
+          <Ionicons name="satellite-outline" size={14} color={colors.textMuted} />
           <Text style={styles.fonteText}>Dados validados via Sentinel-2 · INPE · NASA FIRMS</Text>
         </View>
 
-        {/* Botões */}
         <TouchableOpacity
           style={[styles.botaoPrimario, submitting && styles.botaoDisabled]}
           onPress={handleSubmit}
@@ -440,12 +432,12 @@ export default function Cadastro() {
 
         {hasPermission(role, 'view_dashboard') ? (
           <TouchableOpacity style={styles.botaoSecundario} onPress={() => router.push('/registros')} activeOpacity={0.85}>
-            <Ionicons name="bar-chart-outline" size={20} color="#B478F0" />
+            <Ionicons name="bar-chart-outline" size={20} color={colors.accent} />
             <Text style={styles.textoBotaoSec}>Ver Monitoramento</Text>
           </TouchableOpacity>
         ) : (
           <View style={[styles.botaoSecundario, styles.botaoRestrito]}>
-            <Ionicons name="lock-closed-outline" size={18} color="#6B3A9A" />
+            <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
             <Text style={styles.textoBotaoRestrito}>Monitoramento (restrito a Analistas)</Text>
           </View>
         )}
@@ -464,17 +456,17 @@ export default function Cadastro() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{modal.title}</Text>
               <TouchableOpacity onPress={() => { setSearchQuery(''); setModal(p => ({ ...p, visible: false })); }}>
-                <Ionicons name="close-circle-outline" size={26} color="#CCAAFF" />
+                <Ionicons name="close-circle-outline" size={26} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             {modal.target === 'estado' && (
               <View style={styles.searchWrapper}>
-                <Ionicons name="search-outline" size={16} color="#B478F0" style={{ marginRight: 8 }} />
+                <Ionicons name="search-outline" size={16} color={colors.accent} style={{ marginRight: 8 }} />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Buscar estado..."
-                  placeholderTextColor="#4A2070"
+                  placeholderTextColor={colors.placeholder}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   autoCorrect={false}
@@ -482,7 +474,7 @@ export default function Cadastro() {
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')}>
-                    <Ionicons name="close-outline" size={18} color="#CCAAFF" />
+                    <Ionicons name="close-outline" size={18} color={colors.textSecondary} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -495,15 +487,15 @@ export default function Cadastro() {
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.modalItem} onPress={() => handleModalSelect(item)} activeOpacity={0.7}>
                   {item.color && <View style={[styles.nivelDot, { backgroundColor: item.color, marginRight: 12 }]} />}
-                  {item.icon && <Ionicons name={item.icon} size={16} color="#B478F0" style={{ marginRight: 12 }} />}
+                  {item.icon && <Ionicons name={item.icon} size={16} color={colors.accent} style={{ marginRight: 12 }} />}
                   <Text style={styles.modalItemText} numberOfLines={1}>{item.nome}</Text>
-                  <Ionicons name="chevron-forward-outline" size={15} color="#4A2070" />
+                  <Ionicons name="chevron-forward-outline" size={15} color={colors.textMuted} />
                 </TouchableOpacity>
               )}
               ItemSeparatorComponent={() => <View style={styles.modalSeparator} />}
               ListEmptyComponent={() => (
                 <View style={styles.emptySearch}>
-                  <Ionicons name="search-outline" size={28} color="#4A2070" />
+                  <Ionicons name="search-outline" size={28} color={colors.textMuted} />
                   <Text style={styles.emptySearchText}>Nenhum resultado</Text>
                 </View>
               )}
@@ -514,7 +506,6 @@ export default function Cadastro() {
         </View>
       </Modal>
 
-      {/* Toast */}
       <Animated.View
         style={[
           styles.toast,
@@ -531,91 +522,79 @@ export default function Cadastro() {
   );
 }
 
-const styles = StyleSheet.create({
-  keyboardView: { flex: 1, backgroundColor: '#07000F' },
-  container: { flexGrow: 1, backgroundColor: '#07000F', padding: 20, paddingBottom: 40 },
+const makeStyles = (c) => StyleSheet.create({
+  keyboardView: { flex: 1, backgroundColor: c.bg },
+  container: { flexGrow: 1, backgroundColor: c.bg, padding: 20, paddingBottom: 40 },
 
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, marginTop: 4 },
   roleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     borderWidth: 1, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 4,
-    backgroundColor: '#0C0018',
   },
   roleBadgeText: { fontSize: 9, fontWeight: '700', letterSpacing: 1 },
   roleDot: { width: 6, height: 6, borderRadius: 3 },
 
-  // Page header
   pageHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 18, marginTop: 4 },
   pageHeaderLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   pageIconBig: {
-    width: 56, height: 56, borderRadius: 16, backgroundColor: '#1A003A',
-    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3A1A6A',
-    shadowColor: '#B478F0', shadowOffset: { width: 0, height: 0 },
+    width: 56, height: 56, borderRadius: 16, backgroundColor: c.cardElevated,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.border,
+    shadowColor: c.accent, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3, shadowRadius: 10, elevation: 6,
   },
-  pageTitle:    { fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' },
-  pageSubtitle: { fontSize: 12, color: '#CCAAFF', marginTop: 3 },
+  pageTitle:    { fontSize: 20, fontWeight: 'bold', color: c.textPrimary },
+  pageSubtitle: { fontSize: 12, color: c.textSecondary, marginTop: 3 },
 
-  // Steps indicator
   stepsRow: {
     flexDirection: 'row', alignItems: 'center', marginBottom: 18,
-    backgroundColor: '#0C0018', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#27104A',
+    backgroundColor: c.bgDeep, borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: c.borderFaint,
   },
   stepItem:      { flex: 1, alignItems: 'center', gap: 4 },
   stepActive:    {},
   stepNum: {
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: '#7B2FBE', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.accentBtn, alignItems: 'center', justifyContent: 'center',
     color: '#FFFFFF', fontSize: 12, fontWeight: '800', textAlign: 'center', lineHeight: 26,
   },
-  stepLabel:     { fontSize: 9, color: '#CCAAFF', fontWeight: '600', letterSpacing: 1 },
-  stepConnector: { width: 40, height: 1, backgroundColor: '#3A1A6A' },
-
-  // Legacy (mantidos para compatibilidade)
-  sectionIconBox: {
-    width: 50, height: 50, borderRadius: 14, backgroundColor: '#120028',
-    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3A1A6A',
-  },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' },
-  sectionSubtitle: { fontSize: 13, color: '#CCAAFF', marginTop: 2 },
+  stepLabel:     { fontSize: 9, color: c.textSecondary, fontWeight: '600', letterSpacing: 1 },
+  stepConnector: { width: 40, height: 1, backgroundColor: c.border },
 
   card: {
-    backgroundColor: '#120028', borderRadius: 18, padding: 20,
-    borderWidth: 1, borderColor: '#3A1A6A', marginBottom: 16,
+    backgroundColor: c.card, borderRadius: 18, padding: 20,
+    borderWidth: 1, borderColor: c.border, marginBottom: 16,
     elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25, shadowRadius: 8,
   },
   satTag: {
     flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 16,
-    alignSelf: 'flex-start', backgroundColor: '#0C0018', borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#3A1A6A',
+    alignSelf: 'flex-start', backgroundColor: c.bgDeep, borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: c.border,
   },
-  satTagText: { color: '#B478F0', fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+  satTagText: { color: c.accent, fontSize: 10, fontWeight: '700', letterSpacing: 1 },
 
   inputGroup: { marginBottom: 14 },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 7 },
-  label: { fontSize: 11, color: '#CCAAFF', fontWeight: '700', letterSpacing: 1.2 },
-  labelError: { color: '#F87171' },
+  label: { fontSize: 11, color: c.textSecondary, fontWeight: '700', letterSpacing: 1.2 },
+  labelError: { color: c.textDanger },
 
   input: {
-    backgroundColor: '#0C0018', color: '#FFFFFF', borderRadius: 10,
+    backgroundColor: c.bgDeep, color: c.textPrimary, borderRadius: 10,
     paddingHorizontal: 14, height: 48, fontSize: 15,
-    borderWidth: 1, borderColor: '#3A1A6A',
+    borderWidth: 1, borderColor: c.border,
   },
   inputMultiline: { height: 80, paddingTop: 12, textAlignVertical: 'top' },
-  inputFocused: { borderColor: '#B478F0' },
-  inputError: { borderColor: '#F87171' },
+  inputFocused: { borderColor: c.borderFocus },
+  inputError: { borderColor: c.textDanger },
 
   selectorBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#0C0018', borderRadius: 10, paddingHorizontal: 14,
-    height: 48, borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.bgDeep, borderRadius: 10, paddingHorizontal: 14,
+    height: 48, borderWidth: 1, borderColor: c.border,
   },
-  selectorBtnFilled: { borderColor: '#B478F0' },
-  selectorBtnError: { borderColor: '#F87171' },
-  selectorText: { color: '#FFFFFF', fontSize: 14, flex: 1, marginRight: 8 },
-  selectorPlaceholder: { color: '#4A2070', fontSize: 14, flex: 1, marginRight: 8 },
+  selectorBtnFilled: { borderColor: c.borderFocus },
+  selectorBtnError: { borderColor: c.textDanger },
+  selectorText: { color: c.textPrimary, fontSize: 14, flex: 1, marginRight: 8 },
+  selectorPlaceholder: { color: c.placeholder, fontSize: 14, flex: 1, marginRight: 8 },
 
   nivelDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
 
@@ -623,52 +602,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
     marginBottom: 16, paddingHorizontal: 4,
   },
-  fonteText: { color: '#5A2A8A', fontSize: 11, flex: 1 },
+  fonteText: { color: c.textMuted, fontSize: 11, flex: 1 },
 
   botaoPrimario: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#7B2FBE', paddingVertical: 15, borderRadius: 12,
+    backgroundColor: c.accentBtn, paddingVertical: 15, borderRadius: 12,
     gap: 8, marginBottom: 12, elevation: 6,
-    shadowColor: '#7B2FBE', shadowOffset: { width: 0, height: 4 },
+    shadowColor: c.accentBtn, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45, shadowRadius: 8,
   },
   botaoDisabled: { opacity: 0.5 },
   botaoSecundario: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, borderColor: '#3A1A6A', gap: 8,
+    paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, borderColor: c.border, gap: 8,
   },
   textoBotao: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
-  textoBotaoSec: { color: '#B478F0', fontWeight: 'bold', fontSize: 16 },
+  textoBotaoSec: { color: c.accent, fontWeight: 'bold', fontSize: 16 },
   botaoRestrito: { opacity: 0.45 },
-  textoBotaoRestrito: { color: '#6B3A9A', fontWeight: '600', fontSize: 15 },
+  textoBotaoRestrito: { color: c.textMuted, fontWeight: '600', fontSize: 15 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   modalContainer: {
-    backgroundColor: '#120028', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    backgroundColor: c.card, borderTopLeftRadius: 24, borderTopRightRadius: 24,
     paddingTop: 20, paddingHorizontal: 20,
-    borderWidth: 1, borderColor: '#3A1A6A', width: '100%', overflow: 'hidden',
+    borderWidth: 1, borderColor: c.border, width: '100%', overflow: 'hidden',
   },
   modalList: { minHeight: 0 },
   modalHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    marginBottom: 16, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#27104A',
+    marginBottom: 16, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: c.borderFaint,
   },
-  modalTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: 'bold' },
+  modalTitle: { color: c.textPrimary, fontSize: 17, fontWeight: 'bold' },
   searchWrapper: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0C0018', borderRadius: 10,
-    borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.bgDeep, borderRadius: 10,
+    borderWidth: 1, borderColor: c.border,
     paddingHorizontal: 12, marginBottom: 12,
   },
-  searchInput: { flex: 1, color: '#FFFFFF', fontSize: 14, height: 44 },
+  searchInput: { flex: 1, color: c.textPrimary, fontSize: 14, height: 44 },
   emptySearch: { alignItems: 'center', paddingVertical: 28, gap: 10 },
-  emptySearchText: { color: '#CCAAFF', fontSize: 14, textAlign: 'center' },
+  emptySearchText: { color: c.textSecondary, fontSize: 14, textAlign: 'center' },
   modalItem: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 14, paddingHorizontal: 4,
   },
-  modalItemText: { color: '#FFFFFF', fontSize: 14, flex: 1 },
-  modalSeparator: { height: 1, backgroundColor: '#27104A' },
+  modalItemText: { color: c.textPrimary, fontSize: 14, flex: 1 },
+  modalSeparator: { height: 1, backgroundColor: c.borderFaint },
 
   toast: {
     position: 'absolute', bottom: 28, right: 16,

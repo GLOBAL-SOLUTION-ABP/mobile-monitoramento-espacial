@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import StarField from './components/StarField';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -10,12 +10,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sanitizeText, validateEmail } from './utils/security';
 import { hashPassword, encryptData, decryptData } from './utils/crypto';
 import { logger } from './utils/logger';
+import { useTheme } from './context/ThemeContext';
 
 const USUARIOS_KEY = '@usuarios';
 const TOAST_ICONS = { success: 'checkmark-circle', error: 'close-circle', warning: 'alert-circle' };
 
 export default function NovaConta() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -124,13 +128,12 @@ export default function NovaConta() {
       style={styles.keyboardView}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StarField />
+      <StarField color={colors.starColor} />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
-        {/* Cabeçalho */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIconBox}>
-            <Ionicons name="person-add-outline" size={24} color="#B478F0" />
+            <Ionicons name="person-add-outline" size={24} color={colors.accent} />
           </View>
           <View style={{ marginLeft: 14 }}>
             <Text style={styles.sectionTitle}>Criar Conta</Text>
@@ -138,19 +141,17 @@ export default function NovaConta() {
           </View>
         </View>
 
-        {/* Card do formulário */}
         <View style={styles.card}>
 
-          {/* Nome */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="person-outline" size={13} color={errors.nome ? '#F87171' : '#B478F0'} />
+              <Ionicons name="person-outline" size={13} color={errors.nome ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.nome && styles.labelError]}>NOME COMPLETO</Text>
             </View>
             <TextInput
               style={fieldStyle('nome')}
               placeholder="ex: João Silva"
-              placeholderTextColor="#4A2070"
+              placeholderTextColor={colors.placeholder}
               value={nome}
               onChangeText={v => { setNome(v); clearError('nome'); }}
               autoCapitalize="words"
@@ -160,16 +161,15 @@ export default function NovaConta() {
             />
           </View>
 
-          {/* E-mail */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="mail-outline" size={13} color={errors.email ? '#F87171' : '#B478F0'} />
+              <Ionicons name="mail-outline" size={13} color={errors.email ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.email && styles.labelError]}>E-MAIL</Text>
             </View>
             <TextInput
               style={fieldStyle('email')}
               placeholder="ex: joao@teste.com"
-              placeholderTextColor="#4A2070"
+              placeholderTextColor={colors.placeholder}
               value={email}
               onChangeText={v => { setEmail(v); clearError('email'); }}
               keyboardType="email-address"
@@ -180,17 +180,16 @@ export default function NovaConta() {
             />
           </View>
 
-          {/* Senha */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="lock-closed-outline" size={13} color={errors.senha ? '#F87171' : '#B478F0'} />
+              <Ionicons name="lock-closed-outline" size={13} color={errors.senha ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.senha && styles.labelError]}>SENHA</Text>
             </View>
             <View style={fieldStyle('senha', true)}>
               <TextInput
                 style={styles.inputInner}
                 placeholder="Mínimo 6 caracteres"
-                placeholderTextColor="#4A2070"
+                placeholderTextColor={colors.placeholder}
                 value={senha}
                 onChangeText={v => { setSenha(v); clearError('senha'); }}
                 secureTextEntry={!showSenha}
@@ -199,22 +198,21 @@ export default function NovaConta() {
                 onBlur={() => setFocused(null)}
               />
               <TouchableOpacity onPress={() => setShowSenha(p => !p)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name={showSenha ? 'eye-off-outline' : 'eye-outline'} size={18} color="#B478F0" />
+                <Ionicons name={showSenha ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.accent} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Confirmar Senha */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Ionicons name="lock-closed-outline" size={13} color={errors.confirmar ? '#F87171' : '#B478F0'} />
+              <Ionicons name="lock-closed-outline" size={13} color={errors.confirmar ? colors.textDanger : colors.accent} />
               <Text style={[styles.label, errors.confirmar && styles.labelError]}>CONFIRMAR SENHA</Text>
             </View>
             <View style={fieldStyle('confirmar', true)}>
               <TextInput
                 style={styles.inputInner}
                 placeholder="Repita a senha"
-                placeholderTextColor="#4A2070"
+                placeholderTextColor={colors.placeholder}
                 value={confirmar}
                 onChangeText={v => { setConfirmar(v); clearError('confirmar'); }}
                 secureTextEntry={!showConfirmar}
@@ -223,15 +221,14 @@ export default function NovaConta() {
                 onBlur={() => setFocused(null)}
               />
               <TouchableOpacity onPress={() => setShowConfirmar(p => !p)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name={showConfirmar ? 'eye-off-outline' : 'eye-outline'} size={18} color="#B478F0" />
+                <Ionicons name={showConfirmar ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.accent} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Tipo de Conta */}
           <View style={[styles.inputGroup, { marginBottom: tipoConta === 'admin' ? 14 : 0 }]}>
             <View style={styles.labelRow}>
-              <Ionicons name="shield-outline" size={13} color="#B478F0" />
+              <Ionicons name="shield-outline" size={13} color={colors.accent} />
               <Text style={styles.label}>TIPO DE CONTA</Text>
             </View>
             <View style={styles.tipoContaRow}>
@@ -240,7 +237,7 @@ export default function NovaConta() {
                 onPress={() => { setTipoConta('user'); setCodigoAdmin(''); clearError('codigoAdmin'); }}
                 activeOpacity={0.75}
               >
-                <Ionicons name="person-outline" size={16} color={tipoConta === 'user' ? '#FFFFFF' : '#CCAAFF'} />
+                <Ionicons name="person-outline" size={16} color={tipoConta === 'user' ? '#FFFFFF' : colors.textSecondary} />
                 <Text style={[styles.tipoBtnText, tipoConta === 'user' && styles.tipoBtnTextAtivo]}>Usuário</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -248,18 +245,17 @@ export default function NovaConta() {
                 onPress={() => { setTipoConta('admin'); clearError('codigoAdmin'); }}
                 activeOpacity={0.75}
               >
-                <Ionicons name="shield-checkmark-outline" size={16} color={tipoConta === 'admin' ? '#FFFFFF' : '#CCAAFF'} />
+                <Ionicons name="shield-checkmark-outline" size={16} color={tipoConta === 'admin' ? '#FFFFFF' : colors.textSecondary} />
                 <Text style={[styles.tipoBtnText, tipoConta === 'admin' && styles.tipoBtnTextAtivo]}>Admin</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Código de Admin — aparece apenas quando admin está selecionado */}
           {tipoConta === 'admin' && (
             <View style={[styles.inputGroup, { marginBottom: 0 }]}>
               <View style={styles.labelRow}>
-                <Ionicons name="key-outline" size={13} color={errors.codigoAdmin ? '#F87171' : '#FB923C'} />
-                <Text style={[styles.label, { color: errors.codigoAdmin ? '#F87171' : '#FB923C' }]}>
+                <Ionicons name="key-outline" size={13} color={errors.codigoAdmin ? colors.textDanger : '#FB923C'} />
+                <Text style={[styles.label, { color: errors.codigoAdmin ? colors.textDanger : '#FB923C' }]}>
                   CÓDIGO DE ADMINISTRADOR
                 </Text>
               </View>
@@ -267,7 +263,7 @@ export default function NovaConta() {
                 <TextInput
                   style={styles.inputInner}
                   placeholder="Digite o código de acesso"
-                  placeholderTextColor="#4A2070"
+                  placeholderTextColor={colors.placeholder}
                   value={codigoAdmin}
                   onChangeText={v => { setCodigoAdmin(v); clearError('codigoAdmin'); }}
                   secureTextEntry={!showCodigoAdmin}
@@ -284,7 +280,6 @@ export default function NovaConta() {
 
         </View>
 
-        {/* Botão criar conta */}
         <TouchableOpacity
           style={[styles.botaoPrimario, loading && styles.botaoDisabled]}
           onPress={handleCadastro}
@@ -295,15 +290,13 @@ export default function NovaConta() {
           <Text style={styles.textoBotao}>{loading ? 'Criando conta...' : 'Criar Conta'}</Text>
         </TouchableOpacity>
 
-        {/* Voltar ao login */}
         <TouchableOpacity style={styles.botaoSecundario} onPress={() => router.back()} activeOpacity={0.85}>
-          <Ionicons name="arrow-back-outline" size={18} color="#B478F0" />
+          <Ionicons name="arrow-back-outline" size={18} color={colors.accent} />
           <Text style={styles.textoBotaoSec}>Voltar ao Login</Text>
         </TouchableOpacity>
 
       </ScrollView>
 
-      {/* Toast */}
       <Animated.View
         style={[
           styles.toast,
@@ -322,73 +315,73 @@ export default function NovaConta() {
   );
 }
 
-const styles = StyleSheet.create({
-  keyboardView: { flex: 1, backgroundColor: '#07000F' },
-  container: { flexGrow: 1, backgroundColor: '#07000F', padding: 20, paddingBottom: 40 },
+const makeStyles = (c) => StyleSheet.create({
+  keyboardView: { flex: 1, backgroundColor: c.bg },
+  container: { flexGrow: 1, backgroundColor: c.bg, padding: 20, paddingBottom: 40 },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, marginTop: 4 },
   sectionIconBox: {
-    width: 50, height: 50, borderRadius: 14, backgroundColor: '#120028',
-    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3A1A6A',
+    width: 50, height: 50, borderRadius: 14, backgroundColor: c.card,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.border,
   },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' },
-  sectionSubtitle: { fontSize: 13, color: '#CCAAFF', marginTop: 2 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: c.textPrimary },
+  sectionSubtitle: { fontSize: 13, color: c.textSecondary, marginTop: 2 },
 
   card: {
-    backgroundColor: '#120028', borderRadius: 18, padding: 20,
-    borderWidth: 1, borderColor: '#3A1A6A', marginBottom: 16,
+    backgroundColor: c.card, borderRadius: 18, padding: 20,
+    borderWidth: 1, borderColor: c.border, marginBottom: 16,
     elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25, shadowRadius: 8,
   },
 
   inputGroup: { marginBottom: 14 },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 7 },
-  label: { fontSize: 11, color: '#CCAAFF', fontWeight: '700', letterSpacing: 1.2 },
-  labelError: { color: '#F87171' },
+  label: { fontSize: 11, color: c.textSecondary, fontWeight: '700', letterSpacing: 1.2 },
+  labelError: { color: c.textDanger },
 
   input: {
-    backgroundColor: '#0C0018', color: '#FFFFFF', borderRadius: 10,
+    backgroundColor: c.bgDeep, color: c.textPrimary, borderRadius: 10,
     paddingHorizontal: 14, height: 48, fontSize: 15,
-    borderWidth: 1, borderColor: '#3A1A6A',
+    borderWidth: 1, borderColor: c.border,
   },
-  inputFocused: { borderColor: '#B478F0' },
-  inputError: { borderColor: '#F87171' },
+  inputFocused: { borderColor: c.borderFocus },
+  inputError: { borderColor: c.textDanger },
 
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0C0018', borderRadius: 10,
+    backgroundColor: c.bgDeep, borderRadius: 10,
     paddingHorizontal: 14, height: 48,
-    borderWidth: 1, borderColor: '#3A1A6A',
+    borderWidth: 1, borderColor: c.border,
   },
-  inputWrapperFocused: { borderColor: '#B478F0' },
-  inputWrapperError: { borderColor: '#F87171' },
-  inputInner: { flex: 1, color: '#FFFFFF', fontSize: 15 },
+  inputWrapperFocused: { borderColor: c.borderFocus },
+  inputWrapperError: { borderColor: c.textDanger },
+  inputInner: { flex: 1, color: c.textPrimary, fontSize: 15 },
 
   tipoContaRow:      { flexDirection: 'row', gap: 10 },
   tipoBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, paddingVertical: 12, borderRadius: 10,
-    backgroundColor: '#0C0018', borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.bgDeep, borderWidth: 1, borderColor: c.border,
   },
-  tipoBtnAtivoUser:  { backgroundColor: '#7B2FBE', borderColor: '#B478F0' },
+  tipoBtnAtivoUser:  { backgroundColor: c.accentBtn, borderColor: c.accent },
   tipoBtnAtivoAdmin: { backgroundColor: '#2A0018', borderColor: '#F43F5E' },
-  tipoBtnText:       { color: '#CCAAFF', fontSize: 14, fontWeight: '600' },
+  tipoBtnText:       { color: c.textSecondary, fontSize: 14, fontWeight: '600' },
   tipoBtnTextAtivo:  { color: '#FFFFFF' },
 
   botaoPrimario: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#7B2FBE', paddingVertical: 15, borderRadius: 12,
+    backgroundColor: c.accentBtn, paddingVertical: 15, borderRadius: 12,
     gap: 8, marginBottom: 12, elevation: 6,
-    shadowColor: '#7B2FBE', shadowOffset: { width: 0, height: 4 },
+    shadowColor: c.accentBtn, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45, shadowRadius: 8,
   },
   botaoDisabled: { opacity: 0.6 },
   botaoSecundario: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, borderColor: '#3A1A6A', gap: 8,
+    paddingVertical: 14, borderRadius: 12, borderWidth: 1.5, borderColor: c.border, gap: 8,
   },
   textoBotao: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
-  textoBotaoSec: { color: '#B478F0', fontWeight: 'bold', fontSize: 16 },
+  textoBotaoSec: { color: c.accent, fontWeight: 'bold', fontSize: 16 },
 
   toast: {
     position: 'absolute', bottom: 28, right: 16,

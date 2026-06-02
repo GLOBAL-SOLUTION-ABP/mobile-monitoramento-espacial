@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import StarField from './components/StarField';
 import {
   View, Text, FlatList, ScrollView, StyleSheet,
@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Network from 'expo-network';
 import { useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
 import GlassCard from './components/GlassCard';
 import { checkRateLimit } from './utils/rateLimiter';
 import { logger } from './utils/logger';
@@ -36,22 +37,29 @@ const RISK_ORDER = { 'Crítico': 4, 'Alto': 3, 'Médio': 2, 'Baixo': 1 };
 const RISK_COLORS = { 'Crítico': '#F87171', 'Alto': '#F97316', 'Médio': '#FB923C', 'Baixo': '#B478F0' };
 const TIPOS_ORDER = ['Enchente', 'Seca', 'Queimada', 'Tempestade', 'Múltiplos'];
 
-const chartConfig = {
-  backgroundColor: '#0C0018',
-  backgroundGradientFrom: '#0C0018',
-  backgroundGradientTo: '#120028',
-  decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(180, 120, 240, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(204, 170, 255, ${opacity})`,
-  barPercentage: 0.6,
-  propsForBackgroundLines: { stroke: '#27104A', strokeDasharray: '' },
-};
-
 export default function Registros() {
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { session, loading: loadingAuth, logout } = useAuth();
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  const chartConfig = useMemo(() => ({
+    backgroundColor: colors.bgDeep,
+    backgroundGradientFrom: colors.bgDeep,
+    backgroundGradientTo: colors.card,
+    decimalPlaces: 0,
+    color: (opacity = 1) => isDark
+      ? `rgba(180, 120, 240, ${opacity})`
+      : `rgba(123, 47, 190, ${opacity})`,
+    labelColor: (opacity = 1) => isDark
+      ? `rgba(204, 170, 255, ${opacity})`
+      : `rgba(91, 58, 138, ${opacity})`,
+    barPercentage: 0.6,
+    propsForBackgroundLines: { stroke: colors.borderFaint, strokeDasharray: '' },
+  }), [colors, isDark]);
+
   const [regioes, setRegioes] = useState([]);
   const [isOnline, setIsOnline] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -82,7 +90,6 @@ export default function Registros() {
       const connected = networkState.isConnected ?? true;
       setIsOnline(connected);
 
-      // Tenta a API local primeiro
       if (connected && checkRateLimit('api_read')) {
         try {
           const response = await fetch(`${API_URL}/regioes`);
@@ -96,12 +103,9 @@ export default function Registros() {
               return;
             }
           }
-        } catch (_) {
-          // servidor não disponível — segue para fallback
-        }
+        } catch (_) {}
       }
 
-      // Fallback 1: cache local (AsyncStorage)
       const cached = await readCache();
       if (cached && cached.length > 0) {
         setRegioes(cached);
@@ -109,7 +113,6 @@ export default function Registros() {
         return;
       }
 
-      // Fallback 2: db.json embutido no bundle — sempre disponível
       logger.info('DASHBOARD_FALLBACK', { source: 'db.json' });
       setRegioes(seedDb.regioes ?? []);
     } catch {
@@ -123,12 +126,10 @@ export default function Registros() {
     router.replace('/');
   };
 
-  // ── Analytics ────────────────────────────────────────────────────────────
   const totalRegioes = regioes.length;
   const criticos = regioes.filter(r => r.nivel_risco === 'Crítico').length;
   const estados = new Set(regioes.map(r => r.estado)).size;
 
-  // Distribuição por tipo
   const tipoCount = TIPOS_ORDER.reduce((acc, t) => {
     acc[t] = regioes.filter(r => r.tipo === t).length;
     return acc;
@@ -140,12 +141,10 @@ export default function Registros() {
     datasets: [{ data: tiposComDados.length > 0 ? tiposComDados.map(t => tipoCount[t]) : [0] }],
   };
 
-  // Top 3 por risco
   const top3 = [...regioes]
     .sort((a, b) => (RISK_ORDER[b.nivel_risco] || 0) - (RISK_ORDER[a.nivel_risco] || 0))
     .slice(0, 3);
 
-  // ── Tabela ──────────────────────────────────────────────────────────────
   const COLUMNS = [
     { key: 'estado',      header: 'UF',      width: 50 },
     { key: 'nome',        header: 'Região',   width: 150 },
@@ -164,7 +163,7 @@ export default function Registros() {
           key={col.key}
           style={[
             styles.cell,
-            col.key === 'nivel_risco' && { color: RISK_COLORS[item.nivel_risco] || '#FFFFFF', fontWeight: '700' },
+            col.key === 'nivel_risco' && { color: RISK_COLORS[item.nivel_risco] || colors.textPrimary, fontWeight: '700' },
             { width: col.width },
           ]}
           numberOfLines={1}
@@ -179,7 +178,7 @@ export default function Registros() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#B478F0" />
+        <ActivityIndicator size="large" color={colors.accent} />
         <Text style={styles.loadingText}>Carregando dados de monitoramento...</Text>
       </View>
     );
@@ -187,9 +186,8 @@ export default function Registros() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + 16 }} showsVerticalScrollIndicator={false}>
-      <StarField />
+      <StarField color={colors.starColor} />
 
-      {/* Role badge */}
       {role && (
         <View style={[styles.roleBadge, { borderColor: ROLE_COLORS[role] }]}>
           <Ionicons name="shield-checkmark-outline" size={12} color={ROLE_COLORS[role]} />
@@ -197,7 +195,6 @@ export default function Registros() {
         </View>
       )}
 
-      {/* Banner offline */}
       {!isOnline && (
         <View style={styles.offlineBanner}>
           <Ionicons name="cloud-offline-outline" size={15} color="#FFFFFF" />
@@ -205,26 +202,25 @@ export default function Registros() {
         </View>
       )}
 
-      {/* Fonte de dados */}
       <View style={styles.sourceBanner}>
-        <Ionicons name="satellite-outline" size={13} color="#B478F0" />
+        <Ionicons name="satellite-outline" size={13} color={colors.accent} />
         <Text style={styles.sourceText}>
           {isOnline ? 'API local (db.json) · Sentinel-2 · INPE · NASA FIRMS' : 'db.json local — sem servidor'}
         </Text>
         <View style={[styles.sourceDot, { backgroundColor: isOnline ? '#4ADE80' : '#FB923C' }]} />
       </View>
 
-      {/* KPI hero — regiões monitoradas */}
+      {/* KPI hero */}
       <View style={styles.heroKpi}>
         <View style={styles.heroKpiIcon}>
-          <Ionicons name="planet-outline" size={28} color="#B478F0" />
+          <Ionicons name="planet-outline" size={28} color={colors.accent} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.heroKpiValue}>{totalRegioes}</Text>
           <Text style={styles.heroKpiLabel}>REGIÕES MONITORADAS</Text>
         </View>
         <View style={styles.heroKpiRight}>
-          <Ionicons name="satellite-outline" size={14} color="#3A1A6A" />
+          <Ionicons name="satellite-outline" size={14} color={colors.textMuted} />
           <Text style={styles.heroKpiSrc}>db.json</Text>
         </View>
       </View>
@@ -237,17 +233,17 @@ export default function Registros() {
           <Text style={styles.kpiLabel}>Críticas</Text>
         </View>
         <View style={[styles.kpiCard, { marginLeft: 8 }]}>
-          <Ionicons name="map-outline" size={22} color="#B478F0" />
+          <Ionicons name="map-outline" size={22} color={colors.accent} />
           <Text style={[styles.kpiValue, { fontSize: 28 }]}>{estados}</Text>
           <Text style={styles.kpiLabel}>Estados</Text>
         </View>
       </View>
 
-      {/* Gráfico por tipo */}
+      {/* Gráfico */}
       {tiposComDados.length > 0 && (
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Ionicons name="bar-chart-outline" size={17} color="#B478F0" />
+            <Ionicons name="bar-chart-outline" size={17} color={colors.accent} />
             <Text style={styles.cardTitle}>Distribuição por Tipo de Risco</Text>
           </View>
 
@@ -275,7 +271,7 @@ export default function Registros() {
         </View>
       )}
 
-      {/* Analytics — restrito a analyst e admin */}
+      {/* Analytics */}
       {hasPermission(role, 'view_analytics') ? (
         <View style={styles.card}>
           <View style={styles.cardHeader}>
@@ -298,7 +294,7 @@ export default function Registros() {
                 <Text style={styles.analyticName} numberOfLines={1}>{r.nome}</Text>
                 <Text style={styles.analyticSub}>{r.estado} · {r.tipo} · {r.area_km2?.toLocaleString('pt-BR')} km²</Text>
               </View>
-              <Text style={[styles.analyticQtd, { color: RISK_COLORS[r.nivel_risco] || '#B478F0' }]}>
+              <Text style={[styles.analyticQtd, { color: RISK_COLORS[r.nivel_risco] || colors.accent }]}>
                 {r.nivel_risco}
               </Text>
             </View>
@@ -308,7 +304,7 @@ export default function Registros() {
 
           <View style={styles.analyticRow}>
             <Ionicons name="flame-outline" size={15} color="#F97316" style={{ marginRight: 10 }} />
-            <Text style={[styles.analyticName, { color: '#CCAAFF' }]}>Tipo mais monitorado</Text>
+            <Text style={[styles.analyticName, { color: colors.textSecondary }]}>Tipo mais monitorado</Text>
             <Text style={styles.analyticQtd}>
               {tiposComDados.length > 0
                 ? `${tiposComDados.sort((a, b) => tipoCount[b] - tipoCount[a])[0]} (${tipoCount[tiposComDados[0]]}x)`
@@ -319,7 +315,7 @@ export default function Registros() {
       ) : (
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Ionicons name="lock-closed-outline" size={17} color="#CCAAFF" />
+            <Ionicons name="lock-closed-outline" size={17} color={colors.textSecondary} />
             <Text style={styles.cardTitle}>Análise de Risco</Text>
           </View>
           <View style={styles.accessRestricted}>
@@ -332,7 +328,7 @@ export default function Registros() {
       {/* Tabela */}
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Ionicons name="list-outline" size={17} color="#B478F0" />
+          <Ionicons name="list-outline" size={17} color={colors.accent} />
           <Text style={styles.cardTitle}>Todas as Regiões</Text>
         </View>
 
@@ -355,7 +351,7 @@ export default function Registros() {
         </ScrollView>
       </View>
 
-      {/* Botões de ação */}
+      {/* Botões */}
       <TouchableOpacity
         style={[styles.botao, styles.botaoAlertas]}
         onPress={() => router.push('/alertas')}
@@ -389,13 +385,13 @@ export default function Registros() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#07000F', padding: 16 },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.bg, padding: 16 },
   loadingContainer: {
-    flex: 1, backgroundColor: '#07000F',
+    flex: 1, backgroundColor: c.bg,
     alignItems: 'center', justifyContent: 'center', gap: 14,
   },
-  loadingText: { color: '#CCAAFF', fontSize: 14 },
+  loadingText: { color: c.textSecondary, fontSize: 14 },
   offlineBanner: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#3A0028', padding: 10, borderRadius: 10,
@@ -405,101 +401,96 @@ const styles = StyleSheet.create({
 
   sourceBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
-    backgroundColor: '#0C0018', borderRadius: 10, padding: 10,
-    marginBottom: 14, borderWidth: 1, borderColor: '#1A0A4A',
+    backgroundColor: c.bgDeep, borderRadius: 10, padding: 10,
+    marginBottom: 14, borderWidth: 1, borderColor: c.borderFaint,
   },
-  sourceText: { flex: 1, color: '#B478F0', fontSize: 11, fontWeight: '600' },
-  sourceDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#4ADE80' },
+  sourceText: { flex: 1, color: c.accent, fontSize: 11, fontWeight: '600' },
+  sourceDot: { width: 7, height: 7, borderRadius: 4 },
 
   roleBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-end',
     borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
-    backgroundColor: '#0C0018', marginBottom: 10,
+    backgroundColor: c.bgDeep, marginBottom: 10,
   },
   roleBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 1 },
   accessRestricted: { alignItems: 'center', paddingVertical: 20, gap: 10 },
-  accessRestrictedText: { color: '#CCAAFF', fontSize: 13, textAlign: 'center' },
+  accessRestrictedText: { color: c.textSecondary, fontSize: 13, textAlign: 'center' },
 
-  // KPI hero
   heroKpi: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#120028', borderRadius: 20, padding: 20, marginBottom: 10,
-    borderWidth: 1, borderColor: '#3A1A6A',
-    shadowColor: '#B478F0', shadowOffset: { width: 0, height: 0 },
+    backgroundColor: c.card, borderRadius: 20, padding: 20, marginBottom: 10,
+    borderWidth: 1, borderColor: c.border,
+    shadowColor: c.accent, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.2, shadowRadius: 18, elevation: 10,
   },
   heroKpiIcon: {
     width: 58, height: 58, borderRadius: 16,
-    backgroundColor: '#1A003A', borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.cardElevated, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center', marginRight: 16,
   },
-  heroKpiValue: { fontSize: 42, fontWeight: '900', color: '#FFFFFF', lineHeight: 46 },
-  heroKpiLabel: { fontSize: 9, color: '#CCAAFF', fontWeight: '700', letterSpacing: 2, marginTop: 2 },
+  heroKpiValue: { fontSize: 42, fontWeight: '900', color: c.textPrimary, lineHeight: 46 },
+  heroKpiLabel: { fontSize: 9, color: c.textSecondary, fontWeight: '700', letterSpacing: 2, marginTop: 2 },
   heroKpiRight: { alignItems: 'flex-end', gap: 4 },
-  heroKpiSrc:   { fontSize: 9, color: '#4A2070', letterSpacing: 0.5 },
+  heroKpiSrc:   { fontSize: 9, color: c.textMuted, letterSpacing: 0.5 },
 
   kpiRow: { flexDirection: 'row', marginBottom: 14 },
-  kpiCardCritico: { borderColor: '#3A0A2A', backgroundColor: '#120012' },
+  kpiCardCritico: { borderColor: c.borderDanger, backgroundColor: c.bgDanger },
   kpiCard: {
-    flex: 1, backgroundColor: '#120028', borderRadius: 14, padding: 14,
-    alignItems: 'center', borderWidth: 1, borderColor: '#3A1A6A',
+    flex: 1, backgroundColor: c.card, borderRadius: 14, padding: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: c.border,
     elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2, shadowRadius: 4,
   },
-  kpiIconBox: {
-    width: 40, height: 40, borderRadius: 12, backgroundColor: '#1A003A',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 8,
-  },
-  kpiValue: { color: '#FFFFFF', fontSize: 15, fontWeight: 'bold', textAlign: 'center' },
-  kpiLabel: { color: '#CCAAFF', fontSize: 10, marginTop: 3, textAlign: 'center', letterSpacing: 0.5 },
+  kpiValue: { color: c.textPrimary, fontSize: 15, fontWeight: 'bold', textAlign: 'center' },
+  kpiLabel: { color: c.textSecondary, fontSize: 10, marginTop: 3, textAlign: 'center', letterSpacing: 0.5 },
 
   card: {
-    backgroundColor: '#120028', borderRadius: 16, padding: 16,
-    marginBottom: 14, borderWidth: 1, borderColor: '#3A1A6A',
+    backgroundColor: c.card, borderRadius: 16, padding: 16,
+    marginBottom: 14, borderWidth: 1, borderColor: c.border,
     elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2, shadowRadius: 4,
   },
   cardHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    marginBottom: 14, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#27104A',
+    marginBottom: 14, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: c.borderFaint,
   },
-  cardTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: 'bold' },
+  cardTitle: { color: c.textPrimary, fontSize: 15, fontWeight: 'bold' },
 
   chartFallback: { width: '100%', marginTop: 4 },
   chartFallbackRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  chartFallbackLabel: { color: '#CCAAFF', fontSize: 12, width: 100 },
-  chartFallbackBar: { height: 14, backgroundColor: '#7B2FBE', borderRadius: 4, marginHorizontal: 8, minWidth: 10 },
-  chartFallbackQtd: { color: '#B478F0', fontSize: 12, fontWeight: 'bold', width: 28, textAlign: 'right' },
+  chartFallbackLabel: { color: c.textSecondary, fontSize: 12, width: 100 },
+  chartFallbackBar: { height: 14, backgroundColor: c.accentBtn, borderRadius: 4, marginHorizontal: 8, minWidth: 10 },
+  chartFallbackQtd: { color: c.accent, fontSize: 12, fontWeight: 'bold', width: 28, textAlign: 'right' },
 
   analyticSection: {
-    color: '#CCAAFF', fontSize: 12, fontWeight: '700',
+    color: c.textSecondary, fontSize: 12, fontWeight: '700',
     letterSpacing: 0.8, marginBottom: 12, textTransform: 'uppercase',
   },
   analyticRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   rankBadge: {
-    width: 28, height: 28, borderRadius: 8, backgroundColor: '#3A1A6A',
+    width: 28, height: 28, borderRadius: 8, backgroundColor: c.border,
     alignItems: 'center', justifyContent: 'center', marginRight: 12,
   },
   rankCritico: { backgroundColor: '#300010' },
   rankAlto:    { backgroundColor: '#2A1000' },
   rankMedio:   { backgroundColor: '#1A1000' },
   rankText: { color: '#FFFFFF', fontSize: 12, fontWeight: 'bold' },
-  analyticName: { color: '#FFFFFF', fontSize: 14 },
-  analyticSub:  { color: '#7A50A0', fontSize: 11, marginTop: 2 },
-  analyticQtd: { color: '#B478F0', fontSize: 13, fontWeight: 'bold' },
-  emptyText: { color: '#CCAAFF', fontSize: 14, textAlign: 'center', paddingVertical: 10 },
-  divider: { height: 1, backgroundColor: '#27104A', marginVertical: 12 },
+  analyticName: { color: c.textPrimary, fontSize: 14 },
+  analyticSub:  { color: c.textMuted, fontSize: 11, marginTop: 2 },
+  analyticQtd: { color: c.accent, fontSize: 13, fontWeight: 'bold' },
+  emptyText: { color: c.textSecondary, fontSize: 14, textAlign: 'center', paddingVertical: 10 },
+  divider: { height: 1, backgroundColor: c.borderFaint, marginVertical: 12 },
 
-  row: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#27104A' },
-  headerRow: { backgroundColor: '#0C0018' },
-  rowEven: { backgroundColor: '#0A001A' },
-  rowOdd: { backgroundColor: '#120028' },
+  row: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.borderFaint },
+  headerRow: { backgroundColor: c.bgDeep },
+  rowEven: { backgroundColor: c.bg },
+  rowOdd: { backgroundColor: c.card },
   cell: {
     paddingVertical: 10, paddingHorizontal: 8, textAlign: 'center',
-    color: '#FFFFFF', fontSize: 12, textAlignVertical: 'top',
+    color: c.textPrimary, fontSize: 12, textAlignVertical: 'top',
   },
   headerCell: {
-    color: '#CCAAFF', fontWeight: '700', fontSize: 10,
+    color: c.textSecondary, fontWeight: '700', fontSize: 10,
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
 
@@ -507,14 +498,14 @@ const styles = StyleSheet.create({
   actionsRow: { flexDirection: 'row', marginBottom: 32 },
   botao: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#7B2FBE', paddingVertical: 14, borderRadius: 12, gap: 7,
-    elevation: 4, shadowColor: '#7B2FBE', shadowOffset: { width: 0, height: 3 },
+    backgroundColor: c.accentBtn, paddingVertical: 14, borderRadius: 12, gap: 7,
+    elevation: 4, shadowColor: c.accentBtn, shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.4, shadowRadius: 6,
   },
   botaoSair: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#3A0A2A', paddingVertical: 14, borderRadius: 12, gap: 7,
-    borderWidth: 1, borderColor: '#5A0A3A',
+    backgroundColor: c.borderDanger, paddingVertical: 14, borderRadius: 12, gap: 7,
+    borderWidth: 1, borderColor: c.borderDanger,
   },
   textoBotao: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 15 },
 });
