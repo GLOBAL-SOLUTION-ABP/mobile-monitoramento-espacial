@@ -65,6 +65,9 @@ Satélites como o Sentinel-2 (ESA) e as redes da NASA permitem detectar padrões
 | **Analista** | Dashboard + Cadastro + Alertas | E-mail `@satguard.com` |
 | **Usuário** | Cadastro + Alertas | Qualquer outro e-mail |
 
+### Visual personalizado
+- Tema claro/escuro pode ser escolhido pelo usuário
+
 ### Telas do Aplicativo
 
 #### Login
